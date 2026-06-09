@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoadEditor.Core", "RoadEditor.Core\RoadEditor.Core.csproj", "{B2B7DAA7-5A62-4F30-BD6A-F3C7B81B17AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoadEditor.App", "RoadEditor.App\RoadEditor.App.csproj", "{A87DA0F2-8F28-4F9C-9477-3A1305B7D9E1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B2B7DAA7-5A62-4F30-BD6A-F3C7B81B17AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2B7DAA7-5A62-4F30-BD6A-F3C7B81B17AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2B7DAA7-5A62-4F30-BD6A-F3C7B81B17AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2B7DAA7-5A62-4F30-BD6A-F3C7B81B17AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A87DA0F2-8F28-4F9C-9477-3A1305B7D9E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A87DA0F2-8F28-4F9C-9477-3A1305B7D9E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A87DA0F2-8F28-4F9C-9477-3A1305B7D9E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A87DA0F2-8F28-4F9C-9477-3A1305B7D9E1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
