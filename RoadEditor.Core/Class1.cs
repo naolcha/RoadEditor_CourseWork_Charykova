@@ -9,11 +9,11 @@ public class RoadMap
 
     public RoadMap(int width, int height)
     {
-        if (width <= 0)
-            throw new ArgumentException("Ширина карты должна быть больше нуля.", nameof(width));
+        if (width < 3)
+            throw new ArgumentException("Ширина карты должна быть не меньше 3.", nameof(width));
 
-        if (height <= 0)
-            throw new ArgumentException("Высота карты должна быть больше нуля.", nameof(height));
+        if (height < 3)
+            throw new ArgumentException("Высота карты должна быть не меньше 3.", nameof(height));
 
         Width = width;
         Height = height;
@@ -33,20 +33,28 @@ public class RoadMap
         CheckCoordinates(x, y);
 
         if (string.IsNullOrWhiteSpace(tileType))
-            throw new ArgumentException("Тип элемента карты не может быть пустым.", nameof(tileType));
+            throw new ArgumentException("Тип элемента не может быть пустым.", nameof(tileType));
 
         tiles[y, x] = tileType;
     }
 
-    public void Clear()
+    public void Fill(string tileType)
     {
+        if (string.IsNullOrWhiteSpace(tileType))
+            throw new ArgumentException("Тип элемента не может быть пустым.", nameof(tileType));
+
         for (int y = 0; y < Height; y++)
         {
             for (int x = 0; x < Width; x++)
             {
-                tiles[y, x] = "Empty";
+                tiles[y, x] = tileType;
             }
         }
+    }
+
+    public void Clear()
+    {
+        Fill("Empty");
     }
 
     private void CheckCoordinates(int x, int y)

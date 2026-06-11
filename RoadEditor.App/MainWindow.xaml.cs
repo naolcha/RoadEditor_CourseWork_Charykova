@@ -1,5 +1,4 @@
 using RoadEditor.Core;
-using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -48,6 +47,13 @@ public partial class MainWindow : Window
     private void ClearMap_Click(object sender, RoutedEventArgs e)
     {
         roadMap.Clear();
+        DrawMap();
+        Focus();
+    }
+
+    private void FillMap_Click(object sender, RoutedEventArgs e)
+    {
+        roadMap.Fill(selectedTile);
         DrawMap();
         Focus();
     }
@@ -159,6 +165,22 @@ public partial class MainWindow : Window
                 DrawRoad(canvas, x, y, size, left: true, right: false, up: false, down: true);
                 break;
 
+            case "CornerRightUp":
+                DrawRoad(canvas, x, y, size, left: false, right: true, up: true, down: false);
+                break;
+
+            case "CornerLeftUp":
+                DrawRoad(canvas, x, y, size, left: true, right: false, up: true, down: false);
+                break;
+
+            case "TUp":
+                DrawRoad(canvas, x, y, size, left: true, right: true, up: true, down: false);
+                break;
+
+            case "TDown":
+                DrawRoad(canvas, x, y, size, left: true, right: true, up: false, down: true);
+                break;
+
             case "Cross":
                 DrawRoad(canvas, x, y, size, left: true, right: true, up: true, down: true);
                 break;
@@ -181,33 +203,30 @@ public partial class MainWindow : Window
         int count = 5;
         double cell = size / count;
 
-        for (int row = 0; row < count; row++)
+        for (int i = 1; i < count; i++)
         {
-            for (int col = 0; col < count; col++)
+            var verticalLine = new Line
             {
-                var horizontalLine = new Line
-                {
-                    X1 = x + col * cell,
-                    Y1 = y + row * cell,
-                    X2 = x + (col + 1) * cell,
-                    Y2 = y + row * cell,
-                    Stroke = new SolidColorBrush(Color.FromRgb(85, 85, 85)),
-                    StrokeThickness = 0.7
-                };
+                X1 = x + i * cell,
+                Y1 = y,
+                X2 = x + i * cell,
+                Y2 = y + size,
+                Stroke = new SolidColorBrush(Color.FromRgb(90, 90, 90)),
+                StrokeThickness = 0.7
+            };
 
-                var verticalLine = new Line
-                {
-                    X1 = x + col * cell,
-                    Y1 = y + row * cell,
-                    X2 = x + col * cell,
-                    Y2 = y + (row + 1) * cell,
-                    Stroke = new SolidColorBrush(Color.FromRgb(85, 85, 85)),
-                    StrokeThickness = 0.7
-                };
+            var horizontalLine = new Line
+            {
+                X1 = x,
+                Y1 = y + i * cell,
+                X2 = x + size,
+                Y2 = y + i * cell,
+                Stroke = new SolidColorBrush(Color.FromRgb(90, 90, 90)),
+                StrokeThickness = 0.7
+            };
 
-                canvas.Children.Add(horizontalLine);
-                canvas.Children.Add(verticalLine);
-            }
+            canvas.Children.Add(verticalLine);
+            canvas.Children.Add(horizontalLine);
         }
     }
 
@@ -286,7 +305,10 @@ public partial class MainWindow : Window
     private void Help_Click(object sender, RoutedEventArgs e)
     {
         MessageBox.Show(
-            "ЛКМ по карте - поставить выбранный элемент.\nF1 - справка.\nКнопка «Очистить» очищает карту.",
+            "ЛКМ по карте - поставить выбранный дорожный элемент.\n" +
+            "Кнопка «Залить» заполняет всю карту выбранным элементом.\n" +
+            "Кнопка «Очистить» очищает карту.\n" +
+            "F1 - справка.",
             "Справка");
     }
 
@@ -299,4 +321,3 @@ public partial class MainWindow : Window
         }
     }
 }
-
