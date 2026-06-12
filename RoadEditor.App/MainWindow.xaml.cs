@@ -1,8 +1,12 @@
+using Microsoft.Win32;
 using RoadEditor.Core;
+using System.IO;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 namespace RoadEditor.App;
@@ -56,6 +60,130 @@ public partial class MainWindow : Window
         roadMap.Fill(selectedTile);
         DrawMap();
         Focus();
+    }
+
+    private void SaveMap_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new SaveFileDialog
+        {
+            Filter = "Road editor map (*.roadmap)|*.roadmap|JSON file (*.json)|*.json",
+            FileName = "map.roadmap"
+        };
+
+        if (dialog.ShowDialog() != true)
+            return;
+
+        var data = new MapSaveData
+        {
+            Width = roadMap.Width,
+            Height = roadMap.Height,
+            Tiles = GetTilesArray()
+        };
+
+        string json = JsonSerializer.Serialize(data, new JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+
+        File.WriteAllText(dialog.FileName, json);
+    }
+
+    private void LoadMap_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Road editor map (*.roadmap)|*.roadmap|JSON file (*.json)|*.json|All files (*.*)|*.*"
+        };
+
+        if (dialog.ShowDialog() != true)
+            return;
+
+        try
+        {
+            string json = File.ReadAllText(dialog.FileName);
+            MapSaveData? data = JsonSerializer.Deserialize<MapSaveData>(json);
+
+            if (data == null || data.Width < 3 || data.Height < 3 || data.Tiles == null)
+            {
+                MessageBox.Show("Файл карты поврежден или имеет неправильный формат.", "Ошибка");
+                return;
+            }
+
+            roadMap = new RoadMap(data.Width, data.Height);
+
+            for (int y = 0; y < data.Height; y++)
+            {
+                for (int x = 0; x < data.Width; x++)
+                {
+                    string tile = "Empty";
+
+                    if (y < data.Tiles.Length && x < data.Tiles[y].Length)
+                        tile = data.Tiles[y][x] ?? "Empty";
+
+                    roadMap.SetTile(x, y, tile);
+                }
+            }
+
+            MapWidthTextBox.Text = data.Width.ToString();
+            MapHeightTextBox.Text = data.Height.ToString();
+
+            DrawMap();
+            Focus();
+        }
+        catch
+        {
+            MessageBox.Show("Не удалось загрузить карту.", "Ошибка");
+        }
+    }
+
+    private void ExportPng_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new SaveFileDialog
+        {
+            Filter = "PNG image (*.png)|*.png",
+            FileName = "road-map.png"
+        };
+
+        if (dialog.ShowDialog() != true)
+            return;
+
+        Size size = new(MapCanvas.Width, MapCanvas.Height);
+
+        MapCanvas.Measure(size);
+        MapCanvas.Arrange(new Rect(size));
+        MapCanvas.UpdateLayout();
+
+        var bitmap = new RenderTargetBitmap(
+            (int)MapCanvas.Width,
+            (int)MapCanvas.Height,
+            96,
+            96,
+            PixelFormats.Pbgra32);
+
+        bitmap.Render(MapCanvas);
+
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+
+        using FileStream stream = File.Create(dialog.FileName);
+        encoder.Save(stream);
+    }
+
+    private string[][] GetTilesArray()
+    {
+        var result = new string[roadMap.Height][];
+
+        for (int y = 0; y < roadMap.Height; y++)
+        {
+            result[y] = new string[roadMap.Width];
+
+            for (int x = 0; x < roadMap.Width; x++)
+            {
+                result[y][x] = roadMap.GetTile(x, y);
+            }
+        }
+
+        return result;
     }
 
     private void TileButton_Click(object sender, RoutedEventArgs e)
@@ -179,6 +307,14 @@ public partial class MainWindow : Window
 
             case "TDown":
                 DrawRoad(canvas, x, y, size, left: true, right: true, up: false, down: true);
+                break;
+
+            case "TLeft":
+                DrawRoad(canvas, x, y, size, left: true, right: false, up: true, down: true);
+                break;
+
+            case "TRight":
+                DrawRoad(canvas, x, y, size, left: false, right: true, up: true, down: true);
                 break;
 
             case "Cross":
@@ -306,8 +442,9 @@ public partial class MainWindow : Window
     {
         MessageBox.Show(
             "ЛКМ по карте - поставить выбранный дорожный элемент.\n" +
-            "Кнопка «Залить» заполняет всю карту выбранным элементом.\n" +
-            "Кнопка «Очистить» очищает карту.\n" +
+            "«Сохранить» сохраняет карту в файл .roadmap.\n" +
+            "«Загрузить» открывает ранее сохраненную карту.\n" +
+            "«Экспорт PNG» сохраняет карту как изображение.\n" +
             "F1 - справка.",
             "Справка");
     }
@@ -319,5 +456,14 @@ public partial class MainWindow : Window
             Help_Click(sender, e);
             e.Handled = true;
         }
+    }
+
+    private sealed class MapSaveData
+    {
+        public int Width { get; set; }
+
+        public int Height { get; set; }
+
+        public string[][] Tiles { get; set; } = [];
     }
 }

@@ -23,6 +23,9 @@
               FontSize="14">
 			<MenuItem Header="Очистить" Click="ClearMap_Click"/>
 			<MenuItem Header="Залить" Click="FillMap_Click"/>
+			<MenuItem Header="Сохранить" Click="SaveMap_Click"/>
+			<MenuItem Header="Загрузить" Click="LoadMap_Click"/>
+			<MenuItem Header="Экспорт PNG" Click="ExportPng_Click"/>
 			<MenuItem Header="Справка" Click="Help_Click"/>
 		</Menu>
 
@@ -183,6 +186,22 @@
                                     Background="#416a9e"
                                     BorderBrush="#00aeff"/>
 
+							<Button Content="Т-слева"
+                                    Tag="TLeft"
+                                    Click="TileButton_Click"
+                                    Margin="3"
+                                    Foreground="White"
+                                    Background="#416a9e"
+                                    BorderBrush="#00aeff"/>
+
+							<Button Content="Т-справа"
+                                    Tag="TRight"
+                                    Click="TileButton_Click"
+                                    Margin="3"
+                                    Foreground="White"
+                                    Background="#416a9e"
+                                    BorderBrush="#00aeff"/>
+
 							<Button Content="Перекресток"
                                     Tag="Cross"
                                     Click="TileButton_Click"
@@ -192,7 +211,7 @@
                                     BorderBrush="#00aeff"/>
 						</UniformGrid>
 
-						<TextBlock Text="ЛКМ по карте - поставить выбранный элемент. F1 - справка."
+						<TextBlock Text="ЛКМ по карте - поставить выбранный элемент. Через верхнее меню можно сохранить, загрузить или экспортировать карту в PNG."
                                    Foreground="White"
                                    FontSize="13"
                                    TextWrapping="Wrap"
