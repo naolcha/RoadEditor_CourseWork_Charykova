@@ -18,28 +18,42 @@
 		</Grid.RowDefinitions>
 
 		<Menu Grid.Row="0"
-              Background="#15151d"
+              Background="#15151D"
               Foreground="White"
               FontSize="14">
-			<MenuItem Header="Очистить" Click="ClearMap_Click"/>
-			<MenuItem Header="Залить" Click="FillMap_Click"/>
-			<MenuItem Header="Сохранить" Click="SaveMap_Click"/>
-			<MenuItem Header="Загрузить" Click="LoadMap_Click"/>
-			<MenuItem Header="Экспорт PNG" Click="ExportPng_Click"/>
-			<MenuItem Header="Справка" Click="Help_Click"/>
+
+			<MenuItem Header="Очистить"
+                      Click="ClearMap_Click"/>
+
+			<MenuItem Header="Залить"
+                      Click="FillMap_Click"/>
+
+			<MenuItem Header="Сохранить"
+                      Click="SaveMap_Click"/>
+
+			<MenuItem Header="Загрузить"
+                      Click="LoadMap_Click"/>
+
+			<MenuItem Header="Экспорт PNG"
+                      Click="ExportPng_Click"/>
+
+			<MenuItem Header="Справка"
+                      Click="Help_Click"/>
 		</Menu>
 
 		<Grid Grid.Row="1">
 			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="320"/>
+				<ColumnDefinition Width="340"/>
 				<ColumnDefinition Width="*"/>
 			</Grid.ColumnDefinitions>
 
 			<Border Grid.Column="0"
-                    Background="#2d0054"
+                    Background="#2D0054"
                     Padding="14">
 
-				<ScrollViewer VerticalScrollBarVisibility="Auto">
+				<ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+
 					<StackPanel>
 
 						<TextBlock Text="Редактор дорог"
@@ -67,16 +81,24 @@
 								<ColumnDefinition Width="*"/>
 							</Grid.ColumnDefinitions>
 
-							<StackPanel Grid.Column="0" Margin="0,0,6,0">
-								<TextBlock Text="Ширина" Foreground="White"/>
+							<StackPanel Grid.Column="0"
+                                        Margin="0,0,6,0">
+
+								<TextBlock Text="Ширина"
+                                           Foreground="White"/>
+
 								<TextBox x:Name="MapWidthTextBox"
                                          Text="12"
                                          Height="30"
                                          FontSize="16"/>
 							</StackPanel>
 
-							<StackPanel Grid.Column="1" Margin="6,0,0,0">
-								<TextBlock Text="Высота" Foreground="White"/>
+							<StackPanel Grid.Column="1"
+                                        Margin="6,0,0,0">
+
+								<TextBlock Text="Высота"
+                                           Foreground="White"/>
+
 								<TextBox x:Name="MapHeightTextBox"
                                          Text="7"
                                          Height="30"
@@ -88,10 +110,10 @@
                                 Height="36"
                                 FontSize="15"
                                 Foreground="White"
-                                Background="#416a9e"
-                                BorderBrush="#00aeff"
+                                Background="#416A9E"
+                                BorderBrush="#00AEFF"
                                 BorderThickness="1.5"
-                                Margin="0,0,0,20"
+                                Margin="0,0,0,18"
                                 Click="CreateMap_Click"/>
 
 						<TextBlock Text="Текущий элемент"
@@ -100,122 +122,67 @@
                                    FontWeight="Bold"
                                    Margin="0,0,0,8"/>
 
-						<Canvas x:Name="SelectedTilePreview"
-                                Width="120"
-                                Height="120"
-                                Background="#111118"
+						<Border Width="132"
+                                Height="132"
                                 HorizontalAlignment="Center"
-                                Margin="0,0,0,20"/>
+                                Background="#111118"
+                                BorderBrush="#00AEFF"
+                                BorderThickness="2"
+                                Margin="0,0,0,12">
 
-						<TextBlock Text="Дорожные элементы"
+							<Canvas x:Name="SelectedTilePreview"
+                                    Width="120"
+                                    Height="120"
+                                    Background="#111118"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"/>
+						</Border>
+
+						<TextBlock x:Name="SelectedTileNameText"
+                                   Text="Горизонтальная дорога"
+                                   Foreground="White"
+                                   FontSize="14"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,10"/>
+
+						<Button Content="Залить карту"
+                                Width="160"
+                                Height="38"
+                                HorizontalAlignment="Center"
+                                FontSize="17"
+                                FontWeight="Bold"
+                                Foreground="White"
+                                Background="#202530"
+                                BorderBrush="#00AEFF"
+                                BorderThickness="2"
+                                Margin="0,0,0,20"
+                                Click="FillMap_Click"/>
+
+						<TextBlock Text="Доступные элементы"
                                    Foreground="White"
                                    FontSize="20"
                                    FontWeight="Bold"
                                    Margin="0,0,0,8"/>
 
-						<UniformGrid Columns="2">
-							<Button Content="Пусто"
-                                    Tag="Empty"
-                                    Click="TileButton_Click"
-                                    Margin="3"
-                                    Foreground="White"
-                                    Background="#416a9e"
-                                    BorderBrush="#00aeff"/>
+						<Border Width="296"
+                                Height="224"
+                                HorizontalAlignment="Center"
+                                Background="#111118"
+                                BorderBrush="#6A6A72"
+                                BorderThickness="1">
 
-							<Button Content="Горизонт."
-                                    Tag="RoadHorizontal"
-                                    Click="TileButton_Click"
-                                    Margin="3"
-                                    Foreground="White"
-                                    Background="#416a9e"
-                                    BorderBrush="#00aeff"/>
+							<Canvas x:Name="PaletteCanvas"
+                                    Width="288"
+                                    Height="216"
+                                    Background="#111118"
+                                    MouseLeftButtonDown="PaletteCanvas_MouseLeftButtonDown"/>
+						</Border>
 
-							<Button Content="Вертик."
-                                    Tag="RoadVertical"
-                                    Click="TileButton_Click"
-                                    Margin="3"
-                                    Foreground="White"
-                                    Background="#416a9e"
-                                    BorderBrush="#00aeff"/>
-
-							<Button Content="Угол 1"
-                                    Tag="CornerRightDown"
-                                    Click="TileButton_Click"
-                                    Margin="3"
-                                    Foreground="White"
-                                    Background="#416a9e"
-                                    BorderBrush="#00aeff"/>
-
-							<Button Content="Угол 2"
-                                    Tag="CornerLeftDown"
-                                    Click="TileButton_Click"
-                                    Margin="3"
-                                    Foreground="White"
-                                    Background="#416a9e"
-                                    BorderBrush="#00aeff"/>
-
-							<Button Content="Угол 3"
-                                    Tag="CornerRightUp"
-                                    Click="TileButton_Click"
-                                    Margin="3"
-                                    Foreground="White"
-                                    Background="#416a9e"
-                                    BorderBrush="#00aeff"/>
-
-							<Button Content="Угол 4"
-                                    Tag="CornerLeftUp"
-                                    Click="TileButton_Click"
-                                    Margin="3"
-                                    Foreground="White"
-                                    Background="#416a9e"
-                                    BorderBrush="#00aeff"/>
-
-							<Button Content="Т-сверху"
-                                    Tag="TUp"
-                                    Click="TileButton_Click"
-                                    Margin="3"
-                                    Foreground="White"
-                                    Background="#416a9e"
-                                    BorderBrush="#00aeff"/>
-
-							<Button Content="Т-снизу"
-                                    Tag="TDown"
-                                    Click="TileButton_Click"
-                                    Margin="3"
-                                    Foreground="White"
-                                    Background="#416a9e"
-                                    BorderBrush="#00aeff"/>
-
-							<Button Content="Т-слева"
-                                    Tag="TLeft"
-                                    Click="TileButton_Click"
-                                    Margin="3"
-                                    Foreground="White"
-                                    Background="#416a9e"
-                                    BorderBrush="#00aeff"/>
-
-							<Button Content="Т-справа"
-                                    Tag="TRight"
-                                    Click="TileButton_Click"
-                                    Margin="3"
-                                    Foreground="White"
-                                    Background="#416a9e"
-                                    BorderBrush="#00aeff"/>
-
-							<Button Content="Перекресток"
-                                    Tag="Cross"
-                                    Click="TileButton_Click"
-                                    Margin="3"
-                                    Foreground="White"
-                                    Background="#416a9e"
-                                    BorderBrush="#00aeff"/>
-						</UniformGrid>
-
-						<TextBlock Text="ЛКМ по карте - поставить выбранный элемент. Через верхнее меню можно сохранить, загрузить или экспортировать карту в PNG."
+						<TextBlock Text="Нажми на элемент в палитре, затем нажми на нужную ячейку карты."
                                    Foreground="White"
                                    FontSize="13"
                                    TextWrapping="Wrap"
-                                   Margin="0,18,0,0"/>
+                                   Margin="0,14,0,0"/>
 
 					</StackPanel>
 				</ScrollViewer>
@@ -224,7 +191,7 @@
 			<Border Grid.Column="1"
                     Background="#111118"
                     Padding="18"
-                    BorderBrush="#2d0054"
+                    BorderBrush="#2D0054"
                     BorderThickness="4">
 
 				<ScrollViewer HorizontalScrollBarVisibility="Auto"
@@ -239,3 +206,14 @@
 		</Grid>
 	</Grid>
 </Window>
+
+
+
+
+
+
+
+
+
+
+
