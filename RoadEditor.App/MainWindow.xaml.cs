@@ -390,6 +390,8 @@ public partial class MainWindow : Window
                     right: true,
                     up: true,
                     down: false);
+
+                DrawCrosswalkTop(canvas, x, y, size);
                 break;
 
             case "TDown":
@@ -402,6 +404,8 @@ public partial class MainWindow : Window
                     right: true,
                     up: false,
                     down: true);
+
+                DrawCrosswalkBottom(canvas, x, y, size);
                 break;
 
             case "TLeft":
@@ -414,6 +418,8 @@ public partial class MainWindow : Window
                     right: false,
                     up: true,
                     down: true);
+
+                DrawCrosswalkLeft(canvas, x, y, size);
                 break;
 
             case "TRight":
@@ -426,6 +432,8 @@ public partial class MainWindow : Window
                     right: true,
                     up: true,
                     down: true);
+
+                DrawCrosswalkRight(canvas, x, y, size);
                 break;
 
             case "Cross":
@@ -438,6 +446,11 @@ public partial class MainWindow : Window
                     right: true,
                     up: true,
                     down: true);
+
+                DrawCrosswalkTop(canvas, x, y, size);
+                DrawCrosswalkBottom(canvas, x, y, size);
+                DrawCrosswalkLeft(canvas, x, y, size);
+                DrawCrosswalkRight(canvas, x, y, size);
                 break;
         }
     }
@@ -499,6 +512,7 @@ public partial class MainWindow : Window
         for (int row = 0; row < rowCount; row++)
         {
             double rowTop = y + row * rowHeight;
+
             double offset = row % 2 == 0
                 ? 0
                 : brickWidth / 2;
@@ -561,11 +575,8 @@ public partial class MainWindow : Window
                     (int)y * 2,
                     availableSize);
 
-            double markWidth =
-                1.2 + index % 3;
-
-            double markHeight =
-                0.8 + index % 2;
+            double markWidth = 1.2 + index % 3;
+            double markHeight = 0.8 + index % 2;
 
             var wearMark = new Ellipse
             {
@@ -855,6 +866,198 @@ public partial class MainWindow : Window
             : result;
     }
 
+    private void DrawCrosswalkTop(
+        Canvas canvas,
+        double x,
+        double y,
+        double size)
+    {
+        double roadWidth = size * 0.55;
+
+        double roadLeft =
+            x + size / 2 - roadWidth / 2;
+
+        double stripeWidth = size * 0.022;
+        double stripeHeight = size * 0.17;
+
+        double startX =
+            roadLeft + roadWidth * 0.15;
+
+        double topY =
+            y + size * 0.055;
+
+        int stripeCount = 6;
+        double step = roadWidth * 0.13;
+
+        for (int index = 0;
+             index < stripeCount;
+             index++)
+        {
+            var stripe = new Rectangle
+            {
+                Width = stripeWidth,
+                Height = stripeHeight,
+                Fill = Brushes.White,
+                Opacity = 0.88,
+                IsHitTestVisible = false
+            };
+
+            Canvas.SetLeft(
+                stripe,
+                startX + index * step);
+
+            Canvas.SetTop(
+                stripe,
+                topY);
+
+            canvas.Children.Add(stripe);
+        }
+    }
+
+    private void DrawCrosswalkBottom(
+        Canvas canvas,
+        double x,
+        double y,
+        double size)
+    {
+        double roadWidth = size * 0.55;
+
+        double roadLeft =
+            x + size / 2 - roadWidth / 2;
+
+        double stripeWidth = size * 0.022;
+        double stripeHeight = size * 0.17;
+
+        double startX =
+            roadLeft + roadWidth * 0.15;
+
+        double topY =
+            y + size * 0.775;
+
+        int stripeCount = 6;
+        double step = roadWidth * 0.13;
+
+        for (int index = 0;
+             index < stripeCount;
+             index++)
+        {
+            var stripe = new Rectangle
+            {
+                Width = stripeWidth,
+                Height = stripeHeight,
+                Fill = Brushes.White,
+                Opacity = 0.88,
+                IsHitTestVisible = false
+            };
+
+            Canvas.SetLeft(
+                stripe,
+                startX + index * step);
+
+            Canvas.SetTop(
+                stripe,
+                topY);
+
+            canvas.Children.Add(stripe);
+        }
+    }
+
+    private void DrawCrosswalkLeft(
+        Canvas canvas,
+        double x,
+        double y,
+        double size)
+    {
+        double roadWidth = size * 0.55;
+
+        double roadTop =
+            y + size / 2 - roadWidth / 2;
+
+        double stripeWidth = size * 0.17;
+        double stripeHeight = size * 0.022;
+
+        double leftX =
+            x + size * 0.055;
+
+        double startY =
+            roadTop + roadWidth * 0.15;
+
+        int stripeCount = 6;
+        double step = roadWidth * 0.13;
+
+        for (int index = 0;
+             index < stripeCount;
+             index++)
+        {
+            var stripe = new Rectangle
+            {
+                Width = stripeWidth,
+                Height = stripeHeight,
+                Fill = Brushes.White,
+                Opacity = 0.88,
+                IsHitTestVisible = false
+            };
+
+            Canvas.SetLeft(
+                stripe,
+                leftX);
+
+            Canvas.SetTop(
+                stripe,
+                startY + index * step);
+
+            canvas.Children.Add(stripe);
+        }
+    }
+
+    private void DrawCrosswalkRight(
+        Canvas canvas,
+        double x,
+        double y,
+        double size)
+    {
+        double roadWidth = size * 0.55;
+
+        double roadTop =
+            y + size / 2 - roadWidth / 2;
+
+        double stripeWidth = size * 0.17;
+        double stripeHeight = size * 0.022;
+
+        double leftX =
+            x + size * 0.775;
+
+        double startY =
+            roadTop + roadWidth * 0.15;
+
+        int stripeCount = 6;
+        double step = roadWidth * 0.13;
+
+        for (int index = 0;
+             index < stripeCount;
+             index++)
+        {
+            var stripe = new Rectangle
+            {
+                Width = stripeWidth,
+                Height = stripeHeight,
+                Fill = Brushes.White,
+                Opacity = 0.88,
+                IsHitTestVisible = false
+            };
+
+            Canvas.SetLeft(
+                stripe,
+                leftX);
+
+            Canvas.SetTop(
+                stripe,
+                startY + index * step);
+
+            canvas.Children.Add(stripe);
+        }
+    }
+
     private void DrawRoadMarkings(
         Canvas canvas,
         double x,
@@ -973,7 +1176,9 @@ public partial class MainWindow : Window
                 WriteIndented = true
             });
 
-        File.WriteAllText(dialog.FileName, json);
+        File.WriteAllText(
+            dialog.FileName,
+            json);
     }
 
     private void LoadMap_Click(
@@ -1033,7 +1238,10 @@ public partial class MainWindow : Window
                         tile = data.Tiles[y][x];
                     }
 
-                    roadMap.SetTile(x, y, tile);
+                    roadMap.SetTile(
+                        x,
+                        y,
+                        tile);
                 }
             }
 
@@ -1105,7 +1313,8 @@ public partial class MainWindow : Window
 
         bitmap.Render(MapCanvas);
 
-        var encoder = new PngBitmapEncoder();
+        var encoder =
+            new PngBitmapEncoder();
 
         encoder.Frames.Add(
             BitmapFrame.Create(bitmap));
@@ -1123,10 +1332,10 @@ public partial class MainWindow : Window
         MessageBox.Show(
             "Нажми на дорожный элемент в палитре.\n" +
             "После этого нажми на нужную ячейку карты.\n\n" +
-            "Сохранить — сохранить карту в файл.\n" +
-            "Загрузить — открыть сохраненную карту.\n" +
-            "Экспорт PNG — сохранить карту как изображение.\n" +
-            "F1 — открыть справку.",
+            "Сохранить - сохранить карту в файл.\n" +
+            "Загрузить - открыть сохраненную карту.\n" +
+            "Экспорт PNG - сохранить карту как изображение.\n" +
+            "F1 - открыть справку.",
             "Справка",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
@@ -1155,4 +1364,6 @@ public partial class MainWindow : Window
             Array.Empty<string[]>();
     }
 }
+
+
 
