@@ -452,7 +452,7 @@ public partial class MainWindow : Window
         {
             Width = size,
             Height = size,
-            Fill = new SolidColorBrush(Color.FromRgb(145, 145, 142)),
+            Fill = new SolidColorBrush(Color.FromRgb(137, 138, 136)),
             IsHitTestVisible = false
         };
 
@@ -461,35 +461,150 @@ public partial class MainWindow : Window
 
         canvas.Children.Add(pavement);
 
-        int count = 5;
-        double cell = size / count;
+        DrawPavementBricks(canvas, x, y, size);
+        DrawPavementWear(canvas, x, y, size);
+    }
 
-        for (int index = 1; index < count; index++)
+    private void DrawPavementBricks(
+        Canvas canvas,
+        double x,
+        double y,
+        double size)
+    {
+        const int rowCount = 6;
+
+        double rowHeight = size / rowCount;
+        double brickWidth = size / 3;
+
+        var mortarBrush =
+            new SolidColorBrush(Color.FromRgb(92, 93, 91));
+
+        for (int row = 1; row < rowCount; row++)
         {
-            var verticalLine = new Line
-            {
-                X1 = x + index * cell,
-                Y1 = y,
-                X2 = x + index * cell,
-                Y2 = y + size,
-                Stroke = new SolidColorBrush(Color.FromRgb(90, 90, 90)),
-                StrokeThickness = 0.7,
-                IsHitTestVisible = false
-            };
-
             var horizontalLine = new Line
             {
                 X1 = x,
-                Y1 = y + index * cell,
+                Y1 = y + row * rowHeight,
                 X2 = x + size,
-                Y2 = y + index * cell,
-                Stroke = new SolidColorBrush(Color.FromRgb(90, 90, 90)),
-                StrokeThickness = 0.7,
+                Y2 = y + row * rowHeight,
+                Stroke = mortarBrush,
+                StrokeThickness = Math.Max(0.6, size / 120),
+                Opacity = 0.8,
                 IsHitTestVisible = false
             };
 
-            canvas.Children.Add(verticalLine);
             canvas.Children.Add(horizontalLine);
+        }
+
+        for (int row = 0; row < rowCount; row++)
+        {
+            double rowTop = y + row * rowHeight;
+            double offset = row % 2 == 0
+                ? 0
+                : brickWidth / 2;
+
+            for (double position = offset;
+                 position < size;
+                 position += brickWidth)
+            {
+                if (position <= 0 || position >= size)
+                    continue;
+
+                var verticalLine = new Line
+                {
+                    X1 = x + position,
+                    Y1 = rowTop,
+                    X2 = x + position,
+                    Y2 = rowTop + rowHeight,
+                    Stroke = mortarBrush,
+                    StrokeThickness = Math.Max(0.6, size / 120),
+                    Opacity = 0.8,
+                    IsHitTestVisible = false
+                };
+
+                canvas.Children.Add(verticalLine);
+            }
+        }
+    }
+
+    private void DrawPavementWear(
+        Canvas canvas,
+        double x,
+        double y,
+        double size)
+    {
+        int markCount = Math.Max(8, (int)(size / 7));
+
+        var darkBrush =
+            new SolidColorBrush(Color.FromRgb(78, 79, 77));
+
+        var lightBrush =
+            new SolidColorBrush(Color.FromRgb(190, 190, 185));
+
+        int availableSize = Math.Max(1, (int)size - 8);
+
+        for (int index = 0; index < markCount; index++)
+        {
+            double markX =
+                x + 4 +
+                PositiveModulo(
+                    index * 29 +
+                    (int)x * 3 +
+                    (int)y * 5,
+                    availableSize);
+
+            double markY =
+                y + 4 +
+                PositiveModulo(
+                    index * 17 +
+                    (int)x * 7 +
+                    (int)y * 2,
+                    availableSize);
+
+            double markWidth =
+                1.2 + index % 3;
+
+            double markHeight =
+                0.8 + index % 2;
+
+            var wearMark = new Ellipse
+            {
+                Width = markWidth,
+                Height = markHeight,
+                Fill = index % 2 == 0
+                    ? darkBrush
+                    : lightBrush,
+                Opacity = 0.22,
+                IsHitTestVisible = false
+            };
+
+            Canvas.SetLeft(wearMark, markX);
+            Canvas.SetTop(wearMark, markY);
+
+            canvas.Children.Add(wearMark);
+        }
+
+        for (int index = 0; index < 3; index++)
+        {
+            double startX =
+                x + size * (0.18 + index * 0.24);
+
+            double startY =
+                y + size * (0.22 + index * 0.18);
+
+            var scratch = new Line
+            {
+                X1 = startX,
+                Y1 = startY,
+                X2 = startX + size * 0.09,
+                Y2 = startY + size * 0.025,
+                Stroke = darkBrush,
+                StrokeThickness = Math.Max(0.5, size / 150),
+                Opacity = 0.25,
+                IsHitTestVisible = false
+            };
+
+            canvas.Children.Add(scratch);
         }
     }
 
@@ -576,7 +691,7 @@ public partial class MainWindow : Window
         {
             Width = width,
             Height = height,
-            Fill = new SolidColorBrush(Color.FromRgb(24, 24, 24)),
+            Fill = new SolidColorBrush(Color.FromRgb(31, 32, 34)),
             IsHitTestVisible = false
         };
 
@@ -584,6 +699,160 @@ public partial class MainWindow : Window
         Canvas.SetTop(asphalt, y);
 
         canvas.Children.Add(asphalt);
+
+        DrawAsphaltGrain(
+            canvas,
+            x,
+            y,
+            width,
+            height);
+
+        DrawAsphaltCracks(
+            canvas,
+            x,
+            y,
+            width,
+            height);
+    }
+
+    private void DrawAsphaltGrain(
+        Canvas canvas,
+        double x,
+        double y,
+        double width,
+        double height)
+    {
+        int grainCount =
+            Math.Max(8, (int)((width * height) / 190));
+
+        int availableWidth =
+            Math.Max(1, (int)width - 4);
+
+        int availableHeight =
+            Math.Max(1, (int)height - 4);
+
+        var lightBrush =
+            new SolidColorBrush(Color.FromRgb(88, 89, 91));
+
+        var darkBrush =
+            new SolidColorBrush(Color.FromRgb(8, 9, 10));
+
+        for (int index = 0; index < grainCount; index++)
+        {
+            double grainX =
+                x + 2 +
+                PositiveModulo(
+                    index * 19 +
+                    (int)x * 5 +
+                    (int)y * 3,
+                    availableWidth);
+
+            double grainY =
+                y + 2 +
+                PositiveModulo(
+                    index * 31 +
+                    (int)x * 2 +
+                    (int)y * 7,
+                    availableHeight);
+
+            double grainSize =
+                0.8 + index % 3 * 0.45;
+
+            var grain = new Ellipse
+            {
+                Width = grainSize,
+                Height = grainSize,
+                Fill = index % 3 == 0
+                    ? lightBrush
+                    : darkBrush,
+                Opacity = index % 3 == 0
+                    ? 0.35
+                    : 0.25,
+                IsHitTestVisible = false
+            };
+
+            Canvas.SetLeft(grain, grainX);
+            Canvas.SetTop(grain, grainY);
+
+            canvas.Children.Add(grain);
+        }
+    }
+
+    private void DrawAsphaltCracks(
+        Canvas canvas,
+        double x,
+        double y,
+        double width,
+        double height)
+    {
+        if (width < 22 || height < 22)
+            return;
+
+        var crackBrush =
+            new SolidColorBrush(Color.FromRgb(5, 5, 6));
+
+        double firstX = x + width * 0.28;
+        double firstY = y + height * 0.32;
+
+        var firstCrack = new Polyline
+        {
+            Points = new PointCollection
+            {
+                new Point(firstX, firstY),
+                new Point(
+                    firstX + width * 0.08,
+                    firstY + height * 0.06),
+                new Point(
+                    firstX + width * 0.05,
+                    firstY + height * 0.14),
+                new Point(
+                    firstX + width * 0.13,
+                    firstY + height * 0.2)
+            },
+            Stroke = crackBrush,
+            StrokeThickness = Math.Max(0.45, width / 120),
+            Opacity = 0.42,
+            IsHitTestVisible = false
+        };
+
+        canvas.Children.Add(firstCrack);
+
+        double secondX = x + width * 0.7;
+        double secondY = y + height * 0.62;
+
+        var secondCrack = new Polyline
+        {
+            Points = new PointCollection
+            {
+                new Point(secondX, secondY),
+                new Point(
+                    secondX - width * 0.07,
+                    secondY + height * 0.04),
+                new Point(
+                    secondX - width * 0.03,
+                    secondY + height * 0.11)
+            },
+            Stroke = crackBrush,
+            StrokeThickness = Math.Max(0.4, width / 130),
+            Opacity = 0.32,
+            IsHitTestVisible = false
+        };
+
+        canvas.Children.Add(secondCrack);
+    }
+
+    private static int PositiveModulo(
+        int value,
+        int modulus)
+    {
+        if (modulus <= 0)
+            return 0;
+
+        int result = value % modulus;
+
+        return result < 0
+            ? result + modulus
+            : result;
     }
 
     private void DrawRoadMarkings(
@@ -658,8 +927,8 @@ public partial class MainWindow : Window
         {
             Width = horizontal ? length : thickness,
             Height = horizontal ? thickness : length,
-            Fill = Brushes.White,
-            Opacity = 0.85,
+            Fill = new SolidColorBrush(Color.FromRgb(235, 235, 225)),
+            Opacity = 0.86,
             IsHitTestVisible = false
         };
 
@@ -724,7 +993,8 @@ public partial class MainWindow : Window
 
         try
         {
-            string json = File.ReadAllText(dialog.FileName);
+            string json =
+                File.ReadAllText(dialog.FileName);
 
             MapSaveData? data =
                 JsonSerializer.Deserialize<MapSaveData>(json);
@@ -792,11 +1062,13 @@ public partial class MainWindow : Window
 
         for (int y = 0; y < roadMap.Height; y++)
         {
-            result[y] = new string[roadMap.Width];
+            result[y] =
+                new string[roadMap.Width];
 
             for (int x = 0; x < roadMap.Width; x++)
             {
-                result[y][x] = roadMap.GetTile(x, y);
+                result[y][x] =
+                    roadMap.GetTile(x, y);
             }
         }
 
@@ -834,6 +1106,7 @@ public partial class MainWindow : Window
         bitmap.Render(MapCanvas);
 
         var encoder = new PngBitmapEncoder();
+
         encoder.Frames.Add(
             BitmapFrame.Create(bitmap));
 
@@ -882,3 +1155,4 @@ public partial class MainWindow : Window
             Array.Empty<string[]>();
     }
 }
+
