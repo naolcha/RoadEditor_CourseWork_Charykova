@@ -1,6 +1,7 @@
 using Microsoft.Win32;
 using RoadEditor.Core;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
@@ -20,6 +21,9 @@ public partial class MainWindow : Window
 
     private RoadMap roadMap = new(12, 7);
     private string selectedTile = "RoadHorizontal";
+
+    private readonly Stack<MapSnapshot> undoHistory = new();
+    private readonly Stack<MapSnapshot> redoHistory = new();
 
     private readonly string[] palette =
     {
@@ -74,6 +78,8 @@ public partial class MainWindow : Window
             return;
         }
 
+        SaveStateForUndo();
+
         roadMap = new RoadMap(width, height);
 
         DrawMap();
@@ -82,6 +88,8 @@ public partial class MainWindow : Window
 
     private void ClearMap_Click(object sender, RoutedEventArgs e)
     {
+        SaveStateForUndo();
+
         roadMap.Clear();
 
         DrawMap();
@@ -90,6 +98,8 @@ public partial class MainWindow : Window
 
     private void FillMap_Click(object sender, RoutedEventArgs e)
     {
+        SaveStateForUndo();
+
         roadMap.Fill(selectedTile);
 
         DrawMap();
@@ -217,6 +227,11 @@ public partial class MainWindow : Window
         {
             return;
         }
+
+        if (roadMap.GetTile(x, y) == selectedTile)
+            return;
+
+        SaveStateForUndo();
 
         roadMap.SetTile(x, y, selectedTile);
 
@@ -1146,6 +1161,82 @@ public partial class MainWindow : Window
         canvas.Children.Add(mark);
     }
 
+    private void SaveStateForUndo()
+    {
+        undoHistory.Push(CreateSnapshot());
+        redoHistory.Clear();
+    }
+
+    private MapSnapshot CreateSnapshot()
+    {
+        return new MapSnapshot
+        {
+            Width = roadMap.Width,
+            Height = roadMap.Height,
+            Tiles = GetTilesArray()
+        };
+    }
+
+    private void RestoreSnapshot(MapSnapshot snapshot)
+    {
+        roadMap = new RoadMap(
+            snapshot.Width,
+            snapshot.Height);
+
+        for (int y = 0; y < snapshot.Height; y++)
+        {
+            for (int x = 0; x < snapshot.Width; x++)
+            {
+                string tile = "Empty";
+
+                if (y < snapshot.Tiles.Length &&
+                    snapshot.Tiles[y] != null &&
+                    x < snapshot.Tiles[y].Length &&
+                    !string.IsNullOrWhiteSpace(snapshot.Tiles[y][x]))
+                {
+                    tile = snapshot.Tiles[y][x];
+                }
+
+                roadMap.SetTile(x, y, tile);
+            }
+        }
+
+        MapWidthTextBox.Text =
+            snapshot.Width.ToString();
+
+        MapHeightTextBox.Text =
+            snapshot.Height.ToString();
+
+        DrawMap();
+        Focus();
+    }
+
+    private void Undo()
+    {
+        if (undoHistory.Count == 0)
+            return;
+
+        redoHistory.Push(CreateSnapshot());
+
+        MapSnapshot previousState =
+            undoHistory.Pop();
+
+        RestoreSnapshot(previousState);
+    }
+
+    private void Redo()
+    {
+        if (redoHistory.Count == 0)
+            return;
+
+        undoHistory.Push(CreateSnapshot());
+
+        MapSnapshot nextState =
+            redoHistory.Pop();
+
+        RestoreSnapshot(nextState);
+    }
+
     private void SaveMap_Click(
         object sender,
         RoutedEventArgs e)
@@ -1219,6 +1310,8 @@ public partial class MainWindow : Window
 
                 return;
             }
+
+            SaveStateForUndo();
 
             roadMap = new RoadMap(
                 data.Width,
@@ -1335,6 +1428,8 @@ public partial class MainWindow : Window
             "Сохранить - сохранить карту в файл.\n" +
             "Загрузить - открыть сохраненную карту.\n" +
             "Экспорт PNG - сохранить карту как изображение.\n" +
+            "Ctrl+Z - отменить последнее действие.\n" +
+            "Ctrl+Y - повторить отмененное действие.\n" +
             "F1 - открыть справку.",
             "Справка",
             MessageBoxButton.OK,
@@ -1351,7 +1446,33 @@ public partial class MainWindow : Window
         {
             Help_Click(sender, e);
             e.Handled = true;
+            return;
         }
+
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) &&
+            e.Key == Key.Z)
+        {
+            Undo();
+            e.Handled = true;
+            return;
+        }
+
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) &&
+            e.Key == Key.Y)
+        {
+            Redo();
+            e.Handled = true;
+        }
+    }
+
+    private sealed class MapSnapshot
+    {
+        public int Width { get; set; }
+
+        public int Height { get; set; }
+
+        public string[][] Tiles { get; set; } =
+            Array.Empty<string[]>();
     }
 
     private sealed class MapSaveData
@@ -1364,6 +1485,3 @@ public partial class MainWindow : Window
             Array.Empty<string[]>();
     }
 }
-
-
-
