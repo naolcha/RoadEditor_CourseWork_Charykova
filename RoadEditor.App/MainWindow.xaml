@@ -1,7 +1,7 @@
 <Window x:Class="RoadEditor.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Road Editor"
+        Title="labRoadEditor"
         Width="1200"
         Height="760"
         MinWidth="1000"
@@ -22,20 +22,27 @@
               Foreground="White"
               FontSize="14">
 
+			<MenuItem Header="Отмена"
+                      Click="Undo_Click"/>
+
+			<MenuItem Header="Повтор"
+                      Click="Redo_Click"/>
+
+			<Separator/>
+
 			<MenuItem Header="Очистить"
                       Click="ClearMap_Click"/>
-
-			<MenuItem Header="Залить"
-                      Click="FillMap_Click"/>
-
-			<MenuItem Header="Сохранить"
-                      Click="SaveMap_Click"/>
 
 			<MenuItem Header="Загрузить"
                       Click="LoadMap_Click"/>
 
+			<MenuItem Header="Сохранить"
+                      Click="SaveMap_Click"/>
+
 			<MenuItem Header="Экспорт PNG"
                       Click="ExportPng_Click"/>
+
+			<Separator/>
 
 			<MenuItem Header="Справка"
                       Click="Help_Click"/>
@@ -51,31 +58,23 @@
                     Background="#2D0054"
                     Padding="14">
 
-				<ScrollViewer VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Disabled">
-
+				<ScrollViewer VerticalScrollBarVisibility="Auto">
 					<StackPanel>
-
-						<TextBlock Text="Редактор дорог"
-                                   Foreground="White"
-                                   FontSize="28"
-                                   FontWeight="Bold"
-                                   Margin="0,0,0,18"/>
 
 						<TextBlock x:Name="CellInfoText"
                                    Text="Номер ячейки: 0, 0"
                                    Foreground="White"
-                                   FontSize="18"
+                                   FontSize="21"
                                    FontWeight="Bold"
-                                   Margin="0,0,0,18"/>
+                                   Margin="0,0,0,16"/>
 
 						<TextBlock Text="Размер карты"
                                    Foreground="White"
-                                   FontSize="20"
+                                   FontSize="18"
                                    FontWeight="Bold"
                                    Margin="0,0,0,8"/>
 
-						<Grid Margin="0,0,0,10">
+						<Grid Margin="0,0,0,8">
 							<Grid.ColumnDefinitions>
 								<ColumnDefinition Width="*"/>
 								<ColumnDefinition Width="*"/>
@@ -107,13 +106,13 @@
 						</Grid>
 
 						<Button Content="Создать карту"
-                                Height="36"
+                                Height="34"
                                 FontSize="15"
                                 Foreground="White"
                                 Background="#416A9E"
                                 BorderBrush="#00AEFF"
                                 BorderThickness="1.5"
-                                Margin="0,0,0,18"
+                                Margin="0,0,0,14"
                                 Click="CreateMap_Click"/>
 
 						<TextBlock Text="Текущий элемент"
@@ -122,41 +121,78 @@
                                    FontWeight="Bold"
                                    Margin="0,0,0,8"/>
 
-						<Border Width="132"
-                                Height="132"
-                                HorizontalAlignment="Center"
+						<Canvas x:Name="SelectedTilePreview"
+                                Width="120"
+                                Height="120"
                                 Background="#111118"
-                                BorderBrush="#00AEFF"
-                                BorderThickness="2"
-                                Margin="0,0,0,12">
-
-							<Canvas x:Name="SelectedTilePreview"
-                                    Width="120"
-                                    Height="120"
-                                    Background="#111118"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"/>
-						</Border>
+                                HorizontalAlignment="Center"
+                                Margin="0,0,0,8"/>
 
 						<TextBlock x:Name="SelectedTileNameText"
                                    Text="Горизонтальная дорога"
                                    Foreground="White"
-                                   FontSize="14"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,0,0,10"/>
+                                   FontSize="15"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,12"/>
 
-						<Button Content="Залить карту"
-                                Width="160"
-                                Height="38"
-                                HorizontalAlignment="Center"
-                                FontSize="17"
-                                FontWeight="Bold"
+						<Button Content="Заливка карты"
+                                Height="34"
+                                FontSize="15"
                                 Foreground="White"
                                 Background="#202530"
                                 BorderBrush="#00AEFF"
-                                BorderThickness="2"
-                                Margin="0,0,0,20"
+                                BorderThickness="1.5"
+                                Margin="0,0,0,14"
                                 Click="FillMap_Click"/>
+
+						<TextBlock Text="Масштаб и перемещение"
+                                   Foreground="White"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,7"/>
+
+						<Grid Margin="0,0,0,6">
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*"/>
+								<ColumnDefinition Width="*"/>
+								<ColumnDefinition Width="*"/>
+							</Grid.ColumnDefinitions>
+
+							<Button Grid.Column="0"
+                                    Content="−"
+                                    Height="32"
+                                    Margin="0,0,4,0"
+                                    FontSize="18"
+                                    Click="ZoomOut_Click"/>
+
+							<Button Grid.Column="1"
+                                    Content="100%"
+                                    Height="32"
+                                    Margin="2,0"
+                                    Click="ResetZoom_Click"/>
+
+							<Button Grid.Column="2"
+                                    Content="+"
+                                    Height="32"
+                                    Margin="4,0,0,0"
+                                    FontSize="18"
+                                    Click="ZoomIn_Click"/>
+						</Grid>
+
+						<TextBlock x:Name="ZoomInfoText"
+                                   Text="Масштаб: 100%"
+                                   Foreground="White"
+                                   FontSize="14"
+                                   TextAlignment="Center"
+                                   Margin="0,0,0,4"/>
+
+						<TextBlock Text="Колесо мыши меняет масштаб. Правая кнопка мыши перемещает карту."
+                                   Foreground="#D9CBE7"
+                                   FontSize="12"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Center"
+                                   Margin="0,0,0,14"/>
 
 						<TextBlock Text="Доступные элементы"
                                    Foreground="White"
@@ -164,26 +200,12 @@
                                    FontWeight="Bold"
                                    Margin="0,0,0,8"/>
 
-						<Border Width="296"
-                                Height="224"
-                                HorizontalAlignment="Center"
+						<Canvas x:Name="PaletteCanvas"
+                                Width="288"
+                                Height="216"
                                 Background="#111118"
-                                BorderBrush="#6A6A72"
-                                BorderThickness="1">
-
-							<Canvas x:Name="PaletteCanvas"
-                                    Width="288"
-                                    Height="216"
-                                    Background="#111118"
-                                    MouseLeftButtonDown="PaletteCanvas_MouseLeftButtonDown"/>
-						</Border>
-
-						<TextBlock Text="Нажми на элемент в палитре, затем нажми на нужную ячейку карты."
-                                   Foreground="White"
-                                   FontSize="13"
-                                   TextWrapping="Wrap"
-                                   Margin="0,14,0,0"/>
-
+                                HorizontalAlignment="Center"
+                                MouseLeftButtonDown="PaletteCanvas_MouseLeftButtonDown"/>
 					</StackPanel>
 				</ScrollViewer>
 			</Border>
@@ -194,26 +216,31 @@
                     BorderBrush="#2D0054"
                     BorderThickness="4">
 
-				<ScrollViewer HorizontalScrollBarVisibility="Auto"
-                              VerticalScrollBarVisibility="Auto">
+				<ScrollViewer x:Name="MapScrollViewer"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto"
+                              PreviewMouseWheel="MapScrollViewer_PreviewMouseWheel"
+                              PreviewMouseRightButtonDown="MapScrollViewer_PreviewMouseRightButtonDown"
+                              PreviewMouseRightButtonUp="MapScrollViewer_PreviewMouseRightButtonUp"
+                              PreviewMouseMove="MapScrollViewer_PreviewMouseMove">
 
-					<Canvas x:Name="MapCanvas"
-                            Background="#111118"
-                            MouseLeftButtonDown="MapCanvas_MouseLeftButtonDown"
-                            MouseMove="MapCanvas_MouseMove"/>
+					<Grid x:Name="MapHost"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Top">
+
+						<Grid.LayoutTransform>
+							<ScaleTransform x:Name="MapScaleTransform"
+                                            ScaleX="1"
+                                            ScaleY="1"/>
+						</Grid.LayoutTransform>
+
+						<Canvas x:Name="MapCanvas"
+                                Background="#111118"
+                                MouseLeftButtonDown="MapCanvas_MouseLeftButtonDown"
+                                MouseMove="MapCanvas_MouseMove"/>
+					</Grid>
 				</ScrollViewer>
 			</Border>
 		</Grid>
 	</Grid>
 </Window>
-
-
-
-
-
-
-
-
-
-
-
