@@ -1,11 +1,11 @@
 <Window x:Class="RoadEditor.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="labRoadEditor"
-        Width="1200"
-        Height="760"
-        MinWidth="1000"
-        MinHeight="650"
+        Title="Road Editor"
+        Width="1280"
+        Height="800"
+        MinWidth="1050"
+        MinHeight="680"
         WindowStartupLocation="CenterScreen"
         Background="#111118"
         PreviewKeyDown="Window_PreviewKeyDown"
@@ -30,7 +30,7 @@
 
 			<Separator/>
 
-			<MenuItem Header="Очистить"
+			<MenuItem Header="Очистить карту"
                       Click="ClearMap_Click"/>
 
 			<MenuItem Header="Загрузить"
@@ -50,7 +50,7 @@
 
 		<Grid Grid.Row="1">
 			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="340"/>
+				<ColumnDefinition Width="370"/>
 				<ColumnDefinition Width="*"/>
 			</Grid.ColumnDefinitions>
 
@@ -64,9 +64,9 @@
 						<TextBlock x:Name="CellInfoText"
                                    Text="Номер ячейки: 0, 0"
                                    Foreground="White"
-                                   FontSize="21"
+                                   FontSize="20"
                                    FontWeight="Bold"
-                                   Margin="0,0,0,16"/>
+                                   Margin="0,0,0,14"/>
 
 						<TextBlock Text="Размер карты"
                                    Foreground="White"
@@ -115,15 +115,178 @@
                                 Margin="0,0,0,14"
                                 Click="CreateMap_Click"/>
 
-						<TextBlock Text="Текущий элемент"
+						<TextBlock Text="Режим работы"
                                    Foreground="White"
-                                   FontSize="20"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,8"/>
+
+						<UniformGrid Columns="2"
+                                     Margin="0,0,0,8">
+
+							<Button Content="Дороги"
+                                    Tag="Road"
+                                    Height="32"
+                                    Margin="2"
+                                    Click="DrawingTool_Click"/>
+
+							<Button Content="Выбор"
+                                    Tag="Select"
+                                    Height="32"
+                                    Margin="2"
+                                    Click="DrawingTool_Click"/>
+
+							<Button Content="Линия"
+                                    Tag="Line"
+                                    Height="32"
+                                    Margin="2"
+                                    Click="DrawingTool_Click"/>
+
+							<Button Content="Прямоугольник"
+                                    Tag="Rectangle"
+                                    Height="32"
+                                    Margin="2"
+                                    Click="DrawingTool_Click"/>
+
+							<Button Content="Эллипс"
+                                    Tag="Ellipse"
+                                    Height="32"
+                                    Margin="2"
+                                    Click="DrawingTool_Click"/>
+
+							<Button Content="Треугольник"
+                                    Tag="Triangle"
+                                    Height="32"
+                                    Margin="2"
+                                    Click="DrawingTool_Click"/>
+
+							<Button Content="Стрелка"
+                                    Tag="Arrow"
+                                    Height="32"
+                                    Margin="2"
+                                    Click="DrawingTool_Click"/>
+
+							<Button Content="Звезда"
+                                    Tag="Star"
+                                    Height="32"
+                                    Margin="2"
+                                    Click="DrawingTool_Click"/>
+						</UniformGrid>
+
+						<TextBlock x:Name="DrawingModeText"
+                                   Text="Режим: размещение дорог"
+                                   Foreground="#8DD7FF"
+                                   FontSize="14"
+                                   TextAlignment="Center"
+                                   Margin="0,0,0,10"/>
+
+						<TextBlock Text="Цвет контура"
+                                   Foreground="White"
+                                   FontSize="15"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,4"/>
+
+						<ComboBox x:Name="StrokeColorComboBox"
+                                  SelectedIndex="0"
+                                  Height="30"
+                                  Margin="0,0,0,8">
+
+							<ComboBoxItem Content="Белый"
+                                          Tag="#FFFFFF"/>
+
+							<ComboBoxItem Content="Черный"
+                                          Tag="#111111"/>
+
+							<ComboBoxItem Content="Красный"
+                                          Tag="#E53935"/>
+
+							<ComboBoxItem Content="Синий"
+                                          Tag="#1E88E5"/>
+
+							<ComboBoxItem Content="Зеленый"
+                                          Tag="#43A047"/>
+
+							<ComboBoxItem Content="Желтый"
+                                          Tag="#FDD835"/>
+
+							<ComboBoxItem Content="Фиолетовый"
+                                          Tag="#8E24AA"/>
+						</ComboBox>
+
+						<TextBlock Text="Цвет заливки"
+                                   Foreground="White"
+                                   FontSize="15"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,4"/>
+
+						<ComboBox x:Name="FillColorComboBox"
+                                  SelectedIndex="2"
+                                  Height="30"
+                                  Margin="0,0,0,6">
+
+							<ComboBoxItem Content="Белый"
+                                          Tag="#FFFFFF"/>
+
+							<ComboBoxItem Content="Черный"
+                                          Tag="#111111"/>
+
+							<ComboBoxItem Content="Красный"
+                                          Tag="#E53935"/>
+
+							<ComboBoxItem Content="Синий"
+                                          Tag="#1E88E5"/>
+
+							<ComboBoxItem Content="Зеленый"
+                                          Tag="#43A047"/>
+
+							<ComboBoxItem Content="Желтый"
+                                          Tag="#FDD835"/>
+
+							<ComboBoxItem Content="Фиолетовый"
+                                          Tag="#8E24AA"/>
+						</ComboBox>
+
+						<CheckBox x:Name="UseFillCheckBox"
+                                  Content="Использовать заливку"
+                                  IsChecked="True"
+                                  Foreground="White"
+                                  Margin="0,0,0,8"/>
+
+						<Grid Margin="0,0,0,14">
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*"/>
+								<ColumnDefinition Width="*"/>
+							</Grid.ColumnDefinitions>
+
+							<Button Grid.Column="0"
+                                    Content="Удалить фигуру"
+                                    Height="32"
+                                    Margin="0,0,4,0"
+                                    Click="DeleteSelectedShape_Click"/>
+
+							<Button Grid.Column="1"
+                                    Content="Очистить фигуры"
+                                    Height="32"
+                                    Margin="4,0,0,0"
+                                    Click="ClearShapes_Click"/>
+						</Grid>
+
+						<TextBlock x:Name="SelectedShapeText"
+                                   Text="Фигура не выбрана"
+                                   Foreground="#D9CBE7"
+                                   FontSize="13"
+                                   TextAlignment="Center"
+                                   Margin="0,0,0,14"/>
+
+						<TextBlock Text="Текущий дорожный элемент"
+                                   Foreground="White"
+                                   FontSize="18"
                                    FontWeight="Bold"
                                    Margin="0,0,0,8"/>
 
 						<Canvas x:Name="SelectedTilePreview"
-                                Width="120"
-                                Height="120"
+                                Width="110"
+                                Height="110"
                                 Background="#111118"
                                 HorizontalAlignment="Center"
                                 Margin="0,0,0,8"/>
@@ -131,10 +294,10 @@
 						<TextBlock x:Name="SelectedTileNameText"
                                    Text="Горизонтальная дорога"
                                    Foreground="White"
-                                   FontSize="15"
+                                   FontSize="14"
                                    TextAlignment="Center"
                                    TextWrapping="Wrap"
-                                   Margin="0,0,0,12"/>
+                                   Margin="0,0,0,10"/>
 
 						<Button Content="Заливка карты"
                                 Height="34"
@@ -194,9 +357,9 @@
                                    TextAlignment="Center"
                                    Margin="0,0,0,14"/>
 
-						<TextBlock Text="Доступные элементы"
+						<TextBlock Text="Дорожные элементы"
                                    Foreground="White"
-                                   FontSize="20"
+                                   FontSize="18"
                                    FontWeight="Bold"
                                    Margin="0,0,0,8"/>
 
@@ -238,6 +401,15 @@
                                 Background="#111118"
                                 MouseLeftButtonDown="MapCanvas_MouseLeftButtonDown"
                                 MouseMove="MapCanvas_MouseMove"/>
+
+						<Canvas x:Name="DrawingCanvas"
+                                Width="{Binding ElementName=MapCanvas, Path=Width}"
+                                Height="{Binding ElementName=MapCanvas, Path=Height}"
+                                Background="Transparent"
+                                IsHitTestVisible="False"
+                                MouseLeftButtonDown="DrawingCanvas_MouseLeftButtonDown"
+                                MouseMove="DrawingCanvas_MouseMove"
+                                MouseLeftButtonUp="DrawingCanvas_MouseLeftButtonUp"/>
 					</Grid>
 				</ScrollViewer>
 			</Border>
