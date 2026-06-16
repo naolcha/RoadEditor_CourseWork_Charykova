@@ -7,6 +7,7 @@ namespace RoadEditor.Core;
 public enum RoadTileType
 {
     Empty,
+    Pavement,
     RoadHorizontal,
     RoadVertical,
     CornerRightDown,

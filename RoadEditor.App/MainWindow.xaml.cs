@@ -1,14 +1,10 @@
-using Microsoft.Win32;
 using RoadEditor.Core;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 namespace RoadEditor.App;
@@ -20,78 +16,80 @@ public partial class MainWindow : Window
     private const int PaletteColumns = 4;
 
     private RoadMap roadMap = new(12, 7);
-    private string selectedTile = "RoadHorizontal";
+    private string selectedTile = nameof(RoadTileType.RoadHorizontal);
 
     private readonly Stack<MapSnapshot> undoHistory = new();
     private readonly Stack<MapSnapshot> redoHistory = new();
 
-    private readonly string[] palette =
+    private static readonly string[] Palette =
     {
-        "Empty",
-        "RoadHorizontal",
-        "RoadVertical",
-        "CornerRightDown",
-        "CornerLeftDown",
-        "CornerRightUp",
-        "CornerLeftUp",
-        "TUp",
-        "TDown",
-        "TLeft",
-        "TRight",
-        "Cross"
+        nameof(RoadTileType.Empty),
+        nameof(RoadTileType.Pavement),
+        nameof(RoadTileType.RoadHorizontal),
+        nameof(RoadTileType.RoadVertical),
+        nameof(RoadTileType.CornerRightDown),
+        nameof(RoadTileType.CornerLeftDown),
+        nameof(RoadTileType.CornerRightUp),
+        nameof(RoadTileType.CornerLeftUp),
+        nameof(RoadTileType.TUp),
+        nameof(RoadTileType.TDown),
+        nameof(RoadTileType.TLeft),
+        nameof(RoadTileType.TRight),
+        nameof(RoadTileType.Cross)
     };
+
+    private static readonly IReadOnlyDictionary<string, string> TileNames =
+        new Dictionary<string, string>
+        {
+            [nameof(RoadTileType.Empty)] = "Пустая ячейка",
+            [nameof(RoadTileType.Pavement)] = "Тротуарная плитка",
+            [nameof(RoadTileType.RoadHorizontal)] = "Горизонтальная дорога",
+            [nameof(RoadTileType.RoadVertical)] = "Вертикальная дорога",
+            [nameof(RoadTileType.CornerRightDown)] = "Поворот вправо и вниз",
+            [nameof(RoadTileType.CornerLeftDown)] = "Поворот влево и вниз",
+            [nameof(RoadTileType.CornerRightUp)] = "Поворот вправо и вверх",
+            [nameof(RoadTileType.CornerLeftUp)] = "Поворот влево и вверх",
+            [nameof(RoadTileType.TUp)] = "Развилка вверх",
+            [nameof(RoadTileType.TDown)] = "Развилка вниз",
+            [nameof(RoadTileType.TLeft)] = "Развилка влево",
+            [nameof(RoadTileType.TRight)] = "Развилка вправо",
+            [nameof(RoadTileType.Cross)] = "Перекресток"
+        };
+
+    private static readonly IReadOnlyDictionary<string, TileDefinition> TileDefinitions =
+        new Dictionary<string, TileDefinition>
+        {
+            [nameof(RoadTileType.RoadHorizontal)] = new(true, true, false, false),
+            [nameof(RoadTileType.RoadVertical)] = new(false, false, true, true),
+            [nameof(RoadTileType.CornerRightDown)] = new(false, true, false, true),
+            [nameof(RoadTileType.CornerLeftDown)] = new(true, false, false, true),
+            [nameof(RoadTileType.CornerRightUp)] = new(false, true, true, false),
+            [nameof(RoadTileType.CornerLeftUp)] = new(true, false, true, false),
+            [nameof(RoadTileType.TUp)] = new(true, true, true, false, Crosswalk.Top),
+            [nameof(RoadTileType.TDown)] = new(true, true, false, true, Crosswalk.Bottom),
+            [nameof(RoadTileType.TLeft)] = new(true, false, true, true, Crosswalk.Left),
+            [nameof(RoadTileType.TRight)] = new(false, true, true, true, Crosswalk.Right),
+            [nameof(RoadTileType.Cross)] = new(
+                true,
+                true,
+                true,
+                true,
+                Crosswalk.Top | Crosswalk.Bottom | Crosswalk.Left | Crosswalk.Right)
+        };
 
     public MainWindow()
     {
         InitializeComponent();
-
-        Loaded += (_, _) => Focus();
-
         BuildPalette();
         DrawMap();
         DrawSelectedPreview();
         UpdateSelectedTileName();
     }
 
-    private void CreateMap_Click(object sender, RoutedEventArgs e)
-    {
-        if (!int.TryParse(MapWidthTextBox.Text, out int width) ||
-            !int.TryParse(MapHeightTextBox.Text, out int height))
-        {
-            MessageBox.Show(
-                "Введите корректные размеры карты.",
-                "Ошибка",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
-
-            return;
-        }
-
-        if (width < 3 || height < 3 || width > 50 || height > 50)
-        {
-            MessageBox.Show(
-                "Размер карты должен быть от 3 до 50 клеток.",
-                "Ошибка",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
-
-            return;
-        }
-
-        SaveStateForUndo();
-
-        roadMap = new RoadMap(width, height);
-
-        DrawMap();
-        Focus();
-    }
-
     private void ClearMap_Click(object sender, RoutedEventArgs e)
     {
         SaveStateForUndo();
-
         roadMap.Clear();
-
         DrawMap();
         Focus();
     }
@@ -99,9 +97,7 @@ public partial class MainWindow : Window
     private void FillMap_Click(object sender, RoutedEventArgs e)
     {
         SaveStateForUndo();
-
         roadMap.Fill(selectedTile);
-
         DrawMap();
         Focus();
     }
@@ -110,157 +106,92 @@ public partial class MainWindow : Window
     {
         PaletteCanvas.Children.Clear();
 
-        for (int index = 0; index < palette.Length; index++)
+        for (int index = 0; index < Palette.Length; index++)
         {
-            int column = index % PaletteColumns;
-            int row = index / PaletteColumns;
+            double left = index % PaletteColumns * PaletteCellSize;
+            double top = index / PaletteColumns * PaletteCellSize;
+            string tile = Palette[index];
 
-            double left = column * PaletteCellSize;
-            double top = row * PaletteCellSize;
+            DrawCellBackground(PaletteCanvas, left, top, PaletteCellSize);
+            DrawTile(PaletteCanvas, tile, left, top, PaletteCellSize);
 
-            DrawCellBackground(
+            AddRectangle(
                 PaletteCanvas,
                 left,
                 top,
-                PaletteCellSize);
-
-            DrawTile(
-                PaletteCanvas,
-                palette[index],
-                left,
-                top,
-                PaletteCellSize);
-
-            var border = new Rectangle
-            {
-                Width = PaletteCellSize,
-                Height = PaletteCellSize,
-                Fill = Brushes.Transparent,
-                Stroke = new SolidColorBrush(
-                    palette[index] == selectedTile
+                PaletteCellSize,
+                PaletteCellSize,
+                Brushes.Transparent,
+                new SolidColorBrush(
+                    tile == selectedTile
                         ? Color.FromRgb(0, 174, 255)
                         : Color.FromRgb(95, 95, 100)),
-                StrokeThickness = palette[index] == selectedTile ? 3 : 1.2,
-                IsHitTestVisible = false
-            };
-
-            Canvas.SetLeft(border, left);
-            Canvas.SetTop(border, top);
-
-            PaletteCanvas.Children.Add(border);
+                tile == selectedTile ? 3 : 1.2);
         }
     }
 
-    private void PaletteCanvas_MouseLeftButtonDown(
-        object sender,
-        MouseButtonEventArgs e)
+    private void PaletteCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         Point position = e.GetPosition(PaletteCanvas);
+        int index = (int)(position.Y / PaletteCellSize) * PaletteColumns +
+                    (int)(position.X / PaletteCellSize);
 
-        int column = (int)(position.X / PaletteCellSize);
-        int row = (int)(position.Y / PaletteCellSize);
-        int index = row * PaletteColumns + column;
-
-        if (index < 0 || index >= palette.Length)
+        if ((uint)index >= (uint)Palette.Length)
             return;
 
-        selectedTile = palette[index];
-
+        selectedTile = Palette[index];
         BuildPalette();
         DrawSelectedPreview();
         UpdateSelectedTileName();
-
         Focus();
     }
 
     private void DrawSelectedPreview()
     {
         SelectedTilePreview.Children.Clear();
-
-        DrawCellBackground(
-            SelectedTilePreview,
-            0,
-            0,
-            120);
-
-        DrawTile(
-            SelectedTilePreview,
-            selectedTile,
-            0,
-            0,
-            120);
+        DrawCellBackground(SelectedTilePreview, 0, 0, 120);
+        DrawTile(SelectedTilePreview, selectedTile, 0, 0, 120);
     }
 
     private void UpdateSelectedTileName()
     {
-        SelectedTileNameText.Text = selectedTile switch
-        {
-            "Empty" => "Пустая ячейка",
-            "RoadHorizontal" => "Горизонтальная дорога",
-            "RoadVertical" => "Вертикальная дорога",
-            "CornerRightDown" => "Поворот вправо и вниз",
-            "CornerLeftDown" => "Поворот влево и вниз",
-            "CornerRightUp" => "Поворот вправо и вверх",
-            "CornerLeftUp" => "Поворот влево и вверх",
-            "TUp" => "Развилка вверх",
-            "TDown" => "Развилка вниз",
-            "TLeft" => "Развилка влево",
-            "TRight" => "Развилка вправо",
-            "Cross" => "Перекресток",
-            _ => "Дорожный элемент"
-        };
+        SelectedTileNameText.Text =
+            TileNames.TryGetValue(selectedTile, out string? name)
+                ? name
+                : "Дорожный элемент";
     }
 
-    private void MapCanvas_MouseLeftButtonDown(
-        object sender,
-        MouseButtonEventArgs e)
+    private void MapCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         Point point = e.GetPosition(MapCanvas);
-
         int x = (int)(point.X / CellSize);
         int y = (int)(point.Y / CellSize);
 
-        if (x < 0 ||
-            y < 0 ||
-            x >= roadMap.Width ||
-            y >= roadMap.Height)
+        if (x < 0 || y < 0 || x >= roadMap.Width || y >= roadMap.Height ||
+            roadMap.GetTile(x, y) == selectedTile)
         {
             return;
         }
 
-        if (roadMap.GetTile(x, y) == selectedTile)
-            return;
-
         SaveStateForUndo();
-
         roadMap.SetTile(x, y, selectedTile);
-
         DrawMap();
         Focus();
     }
 
-    private void MapCanvas_MouseMove(
-        object sender,
-        MouseEventArgs e)
+    private void MapCanvas_MouseMove(object sender, MouseEventArgs e)
     {
         Point point = e.GetPosition(MapCanvas);
-
         int x = (int)(point.X / CellSize);
         int y = (int)(point.Y / CellSize);
 
-        if (x >= 0 &&
-            y >= 0 &&
-            x < roadMap.Width &&
-            y < roadMap.Height)
-        {
+        if (x >= 0 && y >= 0 && x < roadMap.Width && y < roadMap.Height)
             CellInfoText.Text = $"Номер ячейки: {x}, {y}";
-        }
     }
 
     private void DrawMap()
     {
         MapCanvas.Children.Clear();
-
         MapCanvas.Width = roadMap.Width * CellSize;
         MapCanvas.Height = roadMap.Height * CellSize;
 
@@ -270,371 +201,135 @@ public partial class MainWindow : Window
             {
                 double left = x * CellSize;
                 double top = y * CellSize;
-
-                DrawCellBackground(
-                    MapCanvas,
-                    left,
-                    top,
-                    CellSize);
-
-                DrawTile(
-                    MapCanvas,
-                    roadMap.GetTile(x, y),
-                    left,
-                    top,
-                    CellSize);
+                DrawCellBackground(MapCanvas, left, top, CellSize);
+                DrawTile(MapCanvas, roadMap.GetTile(x, y), left, top, CellSize);
             }
         }
     }
 
-    private void DrawCellBackground(
-        Canvas canvas,
-        double x,
-        double y,
-        double size)
+    private static void DrawCellBackground(Canvas canvas, double x, double y, double size)
     {
-        var rectangle = new Rectangle
-        {
-            Width = size,
-            Height = size,
-            Fill = new SolidColorBrush(Color.FromRgb(21, 21, 28)),
-            Stroke = new SolidColorBrush(Color.FromRgb(78, 78, 82)),
-            StrokeThickness = 1.2,
-            IsHitTestVisible = false
-        };
-
-        Canvas.SetLeft(rectangle, x);
-        Canvas.SetTop(rectangle, y);
-
-        canvas.Children.Add(rectangle);
+        AddRectangle(
+            canvas,
+            x,
+            y,
+            size,
+            size,
+            new SolidColorBrush(Color.FromRgb(21, 21, 28)),
+            new SolidColorBrush(Color.FromRgb(78, 78, 82)),
+            1.2);
     }
 
-    private void DrawTile(
-        Canvas canvas,
-        string tile,
-        double x,
-        double y,
-        double size)
+    private void DrawTile(Canvas canvas, string tile, double x, double y, double size)
     {
-        if (tile == "Empty")
+        if (tile == nameof(RoadTileType.Empty))
             return;
 
         DrawPavement(canvas, x, y, size);
 
-        switch (tile)
+        if (tile == nameof(RoadTileType.Pavement) ||
+            !TileDefinitions.TryGetValue(tile, out TileDefinition definition))
         {
-            case "RoadHorizontal":
-                DrawRoad(
-                    canvas,
-                    x,
-                    y,
-                    size,
-                    left: true,
-                    right: true,
-                    up: false,
-                    down: false);
-                break;
-
-            case "RoadVertical":
-                DrawRoad(
-                    canvas,
-                    x,
-                    y,
-                    size,
-                    left: false,
-                    right: false,
-                    up: true,
-                    down: true);
-                break;
-
-            case "CornerRightDown":
-                DrawRoad(
-                    canvas,
-                    x,
-                    y,
-                    size,
-                    left: false,
-                    right: true,
-                    up: false,
-                    down: true);
-                break;
-
-            case "CornerLeftDown":
-                DrawRoad(
-                    canvas,
-                    x,
-                    y,
-                    size,
-                    left: true,
-                    right: false,
-                    up: false,
-                    down: true);
-                break;
-
-            case "CornerRightUp":
-                DrawRoad(
-                    canvas,
-                    x,
-                    y,
-                    size,
-                    left: false,
-                    right: true,
-                    up: true,
-                    down: false);
-                break;
-
-            case "CornerLeftUp":
-                DrawRoad(
-                    canvas,
-                    x,
-                    y,
-                    size,
-                    left: true,
-                    right: false,
-                    up: true,
-                    down: false);
-                break;
-
-            case "TUp":
-                DrawRoad(
-                    canvas,
-                    x,
-                    y,
-                    size,
-                    left: true,
-                    right: true,
-                    up: true,
-                    down: false);
-
-                DrawCrosswalkTop(canvas, x, y, size);
-                break;
-
-            case "TDown":
-                DrawRoad(
-                    canvas,
-                    x,
-                    y,
-                    size,
-                    left: true,
-                    right: true,
-                    up: false,
-                    down: true);
-
-                DrawCrosswalkBottom(canvas, x, y, size);
-                break;
-
-            case "TLeft":
-                DrawRoad(
-                    canvas,
-                    x,
-                    y,
-                    size,
-                    left: true,
-                    right: false,
-                    up: true,
-                    down: true);
-
-                DrawCrosswalkLeft(canvas, x, y, size);
-                break;
-
-            case "TRight":
-                DrawRoad(
-                    canvas,
-                    x,
-                    y,
-                    size,
-                    left: false,
-                    right: true,
-                    up: true,
-                    down: true);
-
-                DrawCrosswalkRight(canvas, x, y, size);
-                break;
-
-            case "Cross":
-                DrawRoad(
-                    canvas,
-                    x,
-                    y,
-                    size,
-                    left: true,
-                    right: true,
-                    up: true,
-                    down: true);
-
-                DrawCrosswalkTop(canvas, x, y, size);
-                DrawCrosswalkBottom(canvas, x, y, size);
-                DrawCrosswalkLeft(canvas, x, y, size);
-                DrawCrosswalkRight(canvas, x, y, size);
-                break;
+            return;
         }
+
+        DrawRoad(
+            canvas,
+            x,
+            y,
+            size,
+            definition.Left,
+            definition.Right,
+            definition.Up,
+            definition.Down);
+
+        DrawCrosswalks(canvas, x, y, size, definition.Crosswalks);
     }
 
-    private void DrawPavement(
-        Canvas canvas,
-        double x,
-        double y,
-        double size)
+    private static void DrawPavement(Canvas canvas, double x, double y, double size)
     {
-        var pavement = new Rectangle
-        {
-            Width = size,
-            Height = size,
-            Fill = new SolidColorBrush(Color.FromRgb(137, 138, 136)),
-            IsHitTestVisible = false
-        };
-
-        Canvas.SetLeft(pavement, x);
-        Canvas.SetTop(pavement, y);
-
-        canvas.Children.Add(pavement);
+        AddRectangle(
+            canvas,
+            x,
+            y,
+            size,
+            size,
+            new SolidColorBrush(Color.FromRgb(137, 138, 136)));
 
         DrawPavementBricks(canvas, x, y, size);
         DrawPavementWear(canvas, x, y, size);
     }
 
-    private void DrawPavementBricks(
-        Canvas canvas,
-        double x,
-        double y,
-        double size)
+    private static void DrawPavementBricks(Canvas canvas, double x, double y, double size)
     {
-        const int rowCount = 6;
-
-        double rowHeight = size / rowCount;
+        const int rows = 6;
+        double rowHeight = size / rows;
         double brickWidth = size / 3;
+        Brush mortar = new SolidColorBrush(Color.FromRgb(92, 93, 91));
+        double thickness = Math.Max(0.6, size / 120);
 
-        var mortarBrush =
-            new SolidColorBrush(Color.FromRgb(92, 93, 91));
+        for (int row = 1; row < rows; row++)
+            AddLine(canvas, x, y + row * rowHeight, x + size, y + row * rowHeight, mortar, thickness, 0.8);
 
-        for (int row = 1; row < rowCount; row++)
-        {
-            var horizontalLine = new Line
-            {
-                X1 = x,
-                Y1 = y + row * rowHeight,
-                X2 = x + size,
-                Y2 = y + row * rowHeight,
-                Stroke = mortarBrush,
-                StrokeThickness = Math.Max(0.6, size / 120),
-                Opacity = 0.8,
-                IsHitTestVisible = false
-            };
-
-            canvas.Children.Add(horizontalLine);
-        }
-
-        for (int row = 0; row < rowCount; row++)
+        for (int row = 0; row < rows; row++)
         {
             double rowTop = y + row * rowHeight;
+            double offset = row % 2 == 0 ? 0 : brickWidth / 2;
 
-            double offset = row % 2 == 0
-                ? 0
-                : brickWidth / 2;
-
-            for (double position = offset;
-                 position < size;
-                 position += brickWidth)
+            for (double position = offset; position < size; position += brickWidth)
             {
-                if (position <= 0 || position >= size)
-                    continue;
-
-                var verticalLine = new Line
+                if (position > 0 && position < size)
                 {
-                    X1 = x + position,
-                    Y1 = rowTop,
-                    X2 = x + position,
-                    Y2 = rowTop + rowHeight,
-                    Stroke = mortarBrush,
-                    StrokeThickness = Math.Max(0.6, size / 120),
-                    Opacity = 0.8,
-                    IsHitTestVisible = false
-                };
-
-                canvas.Children.Add(verticalLine);
+                    AddLine(
+                        canvas,
+                        x + position,
+                        rowTop,
+                        x + position,
+                        rowTop + rowHeight,
+                        mortar,
+                        thickness,
+                        0.8);
+                }
             }
         }
     }
 
-    private void DrawPavementWear(
-        Canvas canvas,
-        double x,
-        double y,
-        double size)
+    private static void DrawPavementWear(Canvas canvas, double x, double y, double size)
     {
-        int markCount = Math.Max(8, (int)(size / 7));
+        int count = Math.Max(8, (int)(size / 7));
+        int area = Math.Max(1, (int)size - 8);
+        Brush dark = new SolidColorBrush(Color.FromRgb(78, 79, 77));
+        Brush light = new SolidColorBrush(Color.FromRgb(190, 190, 185));
 
-        var darkBrush =
-            new SolidColorBrush(Color.FromRgb(78, 79, 77));
-
-        var lightBrush =
-            new SolidColorBrush(Color.FromRgb(190, 190, 185));
-
-        int availableSize = Math.Max(1, (int)size - 8);
-
-        for (int index = 0; index < markCount; index++)
+        for (int index = 0; index < count; index++)
         {
-            double markX =
-                x + 4 +
-                PositiveModulo(
-                    index * 29 +
-                    (int)x * 3 +
-                    (int)y * 5,
-                    availableSize);
-
-            double markY =
-                y + 4 +
-                PositiveModulo(
-                    index * 17 +
-                    (int)x * 7 +
-                    (int)y * 2,
-                    availableSize);
-
-            double markWidth = 1.2 + index % 3;
-            double markHeight = 0.8 + index % 2;
-
-            var wearMark = new Ellipse
-            {
-                Width = markWidth,
-                Height = markHeight,
-                Fill = index % 2 == 0
-                    ? darkBrush
-                    : lightBrush,
-                Opacity = 0.22,
-                IsHitTestVisible = false
-            };
-
-            Canvas.SetLeft(wearMark, markX);
-            Canvas.SetTop(wearMark, markY);
-
-            canvas.Children.Add(wearMark);
+            AddEllipse(
+                canvas,
+                x + 4 + PositiveModulo(index * 29 + (int)x * 3 + (int)y * 5, area),
+                y + 4 + PositiveModulo(index * 17 + (int)x * 7 + (int)y * 2, area),
+                1.2 + index % 3,
+                0.8 + index % 2,
+                index % 2 == 0 ? dark : light,
+                0.22);
         }
 
         for (int index = 0; index < 3; index++)
         {
-            double startX =
-                x + size * (0.18 + index * 0.24);
-
-            double startY =
-                y + size * (0.22 + index * 0.18);
-
-            var scratch = new Line
-            {
-                X1 = startX,
-                Y1 = startY,
-                X2 = startX + size * 0.09,
-                Y2 = startY + size * 0.025,
-                Stroke = darkBrush,
-                StrokeThickness = Math.Max(0.5, size / 150),
-                Opacity = 0.25,
-                IsHitTestVisible = false
-            };
-
-            canvas.Children.Add(scratch);
+            double startX = x + size * (0.18 + index * 0.24);
+            double startY = y + size * (0.22 + index * 0.18);
+            AddLine(
+                canvas,
+                startX,
+                startY,
+                startX + size * 0.09,
+                startY + size * 0.025,
+                dark,
+                Math.Max(0.5, size / 150),
+                0.25);
         }
     }
 
-    private void DrawRoad(
+    private static void DrawRoad(
         Canvas canvas,
         double x,
         double y,
@@ -644,436 +339,135 @@ public partial class MainWindow : Window
         bool up,
         bool down)
     {
-        double roadWidth = size * 0.55;
+        double width = size * 0.55;
         double center = size / 2;
-        double start = center - roadWidth / 2;
+        double start = center - width / 2;
 
-        DrawAsphalt(
-            canvas,
-            x + start,
-            y + start,
-            roadWidth,
-            roadWidth);
+        DrawAsphalt(canvas, x + start, y + start, width, width);
+        if (left) DrawAsphalt(canvas, x, y + start, center, width);
+        if (right) DrawAsphalt(canvas, x + center, y + start, center, width);
+        if (up) DrawAsphalt(canvas, x + start, y, width, center);
+        if (down) DrawAsphalt(canvas, x + start, y + center, width, center);
 
-        if (left)
-        {
-            DrawAsphalt(
-                canvas,
-                x,
-                y + start,
-                center,
-                roadWidth);
-        }
-
-        if (right)
-        {
-            DrawAsphalt(
-                canvas,
-                x + center,
-                y + start,
-                center,
-                roadWidth);
-        }
-
-        if (up)
-        {
-            DrawAsphalt(
-                canvas,
-                x + start,
-                y,
-                roadWidth,
-                center);
-        }
-
-        if (down)
-        {
-            DrawAsphalt(
-                canvas,
-                x + start,
-                y + center,
-                roadWidth,
-                center);
-        }
-
-        DrawRoadMarkings(
-            canvas,
-            x,
-            y,
-            size,
-            left,
-            right,
-            up,
-            down);
+        DrawRoadMarkings(canvas, x, y, size, left, right, up, down);
     }
 
-    private void DrawAsphalt(
-        Canvas canvas,
-        double x,
-        double y,
-        double width,
-        double height)
+    private static void DrawAsphalt(Canvas canvas, double x, double y, double width, double height)
     {
-        var asphalt = new Rectangle
-        {
-            Width = width,
-            Height = height,
-            Fill = new SolidColorBrush(Color.FromRgb(31, 32, 34)),
-            IsHitTestVisible = false
-        };
-
-        Canvas.SetLeft(asphalt, x);
-        Canvas.SetTop(asphalt, y);
-
-        canvas.Children.Add(asphalt);
-
-        DrawAsphaltGrain(
+        AddRectangle(
             canvas,
             x,
             y,
             width,
-            height);
+            height,
+            new SolidColorBrush(Color.FromRgb(31, 32, 34)));
 
-        DrawAsphaltCracks(
-            canvas,
-            x,
-            y,
-            width,
-            height);
+        DrawAsphaltGrain(canvas, x, y, width, height);
+        DrawAsphaltCracks(canvas, x, y, width, height);
     }
 
-    private void DrawAsphaltGrain(
-        Canvas canvas,
-        double x,
-        double y,
-        double width,
-        double height)
+    private static void DrawAsphaltGrain(Canvas canvas, double x, double y, double width, double height)
     {
-        int grainCount =
-            Math.Max(8, (int)((width * height) / 190));
+        int count = Math.Max(8, (int)(width * height / 190));
+        int availableWidth = Math.Max(1, (int)width - 4);
+        int availableHeight = Math.Max(1, (int)height - 4);
+        Brush light = new SolidColorBrush(Color.FromRgb(88, 89, 91));
+        Brush dark = new SolidColorBrush(Color.FromRgb(8, 9, 10));
 
-        int availableWidth =
-            Math.Max(1, (int)width - 4);
-
-        int availableHeight =
-            Math.Max(1, (int)height - 4);
-
-        var lightBrush =
-            new SolidColorBrush(Color.FromRgb(88, 89, 91));
-
-        var darkBrush =
-            new SolidColorBrush(Color.FromRgb(8, 9, 10));
-
-        for (int index = 0; index < grainCount; index++)
+        for (int index = 0; index < count; index++)
         {
-            double grainX =
-                x + 2 +
-                PositiveModulo(
-                    index * 19 +
-                    (int)x * 5 +
-                    (int)y * 3,
-                    availableWidth);
-
-            double grainY =
-                y + 2 +
-                PositiveModulo(
-                    index * 31 +
-                    (int)x * 2 +
-                    (int)y * 7,
-                    availableHeight);
-
-            double grainSize =
-                0.8 + index % 3 * 0.45;
-
-            var grain = new Ellipse
-            {
-                Width = grainSize,
-                Height = grainSize,
-                Fill = index % 3 == 0
-                    ? lightBrush
-                    : darkBrush,
-                Opacity = index % 3 == 0
-                    ? 0.35
-                    : 0.25,
-                IsHitTestVisible = false
-            };
-
-            Canvas.SetLeft(grain, grainX);
-            Canvas.SetTop(grain, grainY);
-
-            canvas.Children.Add(grain);
+            double grainSize = 0.8 + index % 3 * 0.45;
+            AddEllipse(
+                canvas,
+                x + 2 + PositiveModulo(index * 19 + (int)x * 5 + (int)y * 3, availableWidth),
+                y + 2 + PositiveModulo(index * 31 + (int)x * 2 + (int)y * 7, availableHeight),
+                grainSize,
+                grainSize,
+                index % 3 == 0 ? light : dark,
+                index % 3 == 0 ? 0.35 : 0.25);
         }
     }
 
-    private void DrawAsphaltCracks(
-        Canvas canvas,
-        double x,
-        double y,
-        double width,
-        double height)
+    private static void DrawAsphaltCracks(Canvas canvas, double x, double y, double width, double height)
     {
         if (width < 22 || height < 22)
             return;
 
-        var crackBrush =
-            new SolidColorBrush(Color.FromRgb(5, 5, 6));
-
+        Brush brush = new SolidColorBrush(Color.FromRgb(5, 5, 6));
         double firstX = x + width * 0.28;
         double firstY = y + height * 0.32;
-
-        var firstCrack = new Polyline
-        {
-            Points = new PointCollection
-            {
-                new Point(firstX, firstY),
-                new Point(
-                    firstX + width * 0.08,
-                    firstY + height * 0.06),
-                new Point(
-                    firstX + width * 0.05,
-                    firstY + height * 0.14),
-                new Point(
-                    firstX + width * 0.13,
-                    firstY + height * 0.2)
-            },
-            Stroke = crackBrush,
-            StrokeThickness = Math.Max(0.45, width / 120),
-            Opacity = 0.42,
-            IsHitTestVisible = false
-        };
-
-        canvas.Children.Add(firstCrack);
-
         double secondX = x + width * 0.7;
         double secondY = y + height * 0.62;
 
-        var secondCrack = new Polyline
+        AddPolyline(
+            canvas,
+            new Point(firstX, firstY),
+            new Point(firstX + width * 0.08, firstY + height * 0.06),
+            new Point(firstX + width * 0.05, firstY + height * 0.14),
+            new Point(firstX + width * 0.13, firstY + height * 0.2),
+            brush,
+            Math.Max(0.45, width / 120),
+            0.42);
+
+        AddPolyline(
+            canvas,
+            new Point(secondX, secondY),
+            new Point(secondX - width * 0.07, secondY + height * 0.04),
+            new Point(secondX - width * 0.03, secondY + height * 0.11),
+            brush,
+            Math.Max(0.4, width / 130),
+            0.32);
+    }
+
+    private static void DrawCrosswalks(
+        Canvas canvas,
+        double x,
+        double y,
+        double size,
+        Crosswalk crosswalks)
+    {
+        foreach (Crosswalk side in new[]
+                 {
+                     Crosswalk.Top,
+                     Crosswalk.Bottom,
+                     Crosswalk.Left,
+                     Crosswalk.Right
+                 })
         {
-            Points = new PointCollection
-            {
-                new Point(secondX, secondY),
-                new Point(
-                    secondX - width * 0.07,
-                    secondY + height * 0.04),
-                new Point(
-                    secondX - width * 0.03,
-                    secondY + height * 0.11)
-            },
-            Stroke = crackBrush,
-            StrokeThickness = Math.Max(0.4, width / 130),
-            Opacity = 0.32,
-            IsHitTestVisible = false
+            if (crosswalks.HasFlag(side))
+                DrawCrosswalk(canvas, x, y, size, side);
+        }
+    }
+
+    private static void DrawCrosswalk(Canvas canvas, double x, double y, double size, Crosswalk side)
+    {
+        double roadWidth = size * 0.55;
+        bool verticalStripes = side is Crosswalk.Top or Crosswalk.Bottom;
+        double fixedPosition = side switch
+        {
+            Crosswalk.Top or Crosswalk.Left => size * 0.055,
+            _ => size * 0.775
         };
-
-        canvas.Children.Add(secondCrack);
-    }
-
-    private static int PositiveModulo(
-        int value,
-        int modulus)
-    {
-        if (modulus <= 0)
-            return 0;
-
-        int result = value % modulus;
-
-        return result < 0
-            ? result + modulus
-            : result;
-    }
-
-    private void DrawCrosswalkTop(
-        Canvas canvas,
-        double x,
-        double y,
-        double size)
-    {
-        double roadWidth = size * 0.55;
-
-        double roadLeft =
-            x + size / 2 - roadWidth / 2;
-
-        double stripeWidth = size * 0.022;
-        double stripeHeight = size * 0.17;
-
-        double startX =
-            roadLeft + roadWidth * 0.15;
-
-        double topY =
-            y + size * 0.055;
-
-        int stripeCount = 6;
+        double changingPosition = size / 2 - roadWidth / 2 + roadWidth * 0.15;
         double step = roadWidth * 0.13;
 
-        for (int index = 0;
-             index < stripeCount;
-             index++)
+        for (int index = 0; index < 6; index++)
         {
-            var stripe = new Rectangle
-            {
-                Width = stripeWidth,
-                Height = stripeHeight,
-                Fill = Brushes.White,
-                Opacity = 0.88,
-                IsHitTestVisible = false
-            };
+            double left = verticalStripes ? x + changingPosition + index * step : x + fixedPosition;
+            double top = verticalStripes ? y + fixedPosition : y + changingPosition + index * step;
 
-            Canvas.SetLeft(
-                stripe,
-                startX + index * step);
-
-            Canvas.SetTop(
-                stripe,
-                topY);
-
-            canvas.Children.Add(stripe);
+            AddRectangle(
+                canvas,
+                left,
+                top,
+                verticalStripes ? size * 0.022 : size * 0.17,
+                verticalStripes ? size * 0.17 : size * 0.022,
+                Brushes.White,
+                opacity: 0.88);
         }
     }
 
-    private void DrawCrosswalkBottom(
-        Canvas canvas,
-        double x,
-        double y,
-        double size)
-    {
-        double roadWidth = size * 0.55;
-
-        double roadLeft =
-            x + size / 2 - roadWidth / 2;
-
-        double stripeWidth = size * 0.022;
-        double stripeHeight = size * 0.17;
-
-        double startX =
-            roadLeft + roadWidth * 0.15;
-
-        double topY =
-            y + size * 0.775;
-
-        int stripeCount = 6;
-        double step = roadWidth * 0.13;
-
-        for (int index = 0;
-             index < stripeCount;
-             index++)
-        {
-            var stripe = new Rectangle
-            {
-                Width = stripeWidth,
-                Height = stripeHeight,
-                Fill = Brushes.White,
-                Opacity = 0.88,
-                IsHitTestVisible = false
-            };
-
-            Canvas.SetLeft(
-                stripe,
-                startX + index * step);
-
-            Canvas.SetTop(
-                stripe,
-                topY);
-
-            canvas.Children.Add(stripe);
-        }
-    }
-
-    private void DrawCrosswalkLeft(
-        Canvas canvas,
-        double x,
-        double y,
-        double size)
-    {
-        double roadWidth = size * 0.55;
-
-        double roadTop =
-            y + size / 2 - roadWidth / 2;
-
-        double stripeWidth = size * 0.17;
-        double stripeHeight = size * 0.022;
-
-        double leftX =
-            x + size * 0.055;
-
-        double startY =
-            roadTop + roadWidth * 0.15;
-
-        int stripeCount = 6;
-        double step = roadWidth * 0.13;
-
-        for (int index = 0;
-             index < stripeCount;
-             index++)
-        {
-            var stripe = new Rectangle
-            {
-                Width = stripeWidth,
-                Height = stripeHeight,
-                Fill = Brushes.White,
-                Opacity = 0.88,
-                IsHitTestVisible = false
-            };
-
-            Canvas.SetLeft(
-                stripe,
-                leftX);
-
-            Canvas.SetTop(
-                stripe,
-                startY + index * step);
-
-            canvas.Children.Add(stripe);
-        }
-    }
-
-    private void DrawCrosswalkRight(
-        Canvas canvas,
-        double x,
-        double y,
-        double size)
-    {
-        double roadWidth = size * 0.55;
-
-        double roadTop =
-            y + size / 2 - roadWidth / 2;
-
-        double stripeWidth = size * 0.17;
-        double stripeHeight = size * 0.022;
-
-        double leftX =
-            x + size * 0.775;
-
-        double startY =
-            roadTop + roadWidth * 0.15;
-
-        int stripeCount = 6;
-        double step = roadWidth * 0.13;
-
-        for (int index = 0;
-             index < stripeCount;
-             index++)
-        {
-            var stripe = new Rectangle
-            {
-                Width = stripeWidth,
-                Height = stripeHeight,
-                Fill = Brushes.White,
-                Opacity = 0.88,
-                IsHitTestVisible = false
-            };
-
-            Canvas.SetLeft(
-                stripe,
-                leftX);
-
-            Canvas.SetTop(
-                stripe,
-                startY + index * step);
-
-            canvas.Children.Add(stripe);
-        }
-    }
-
-    private void DrawRoadMarkings(
+    private static void DrawRoadMarkings(
         Canvas canvas,
         double x,
         double y,
@@ -1085,55 +479,16 @@ public partial class MainWindow : Window
     {
         double centerX = x + size / 2;
         double centerY = y + size / 2;
-        double markLength = size * 0.14;
-        double markThickness = size * 0.02;
+        double length = size * 0.14;
+        double thickness = size * 0.02;
 
-        if (left)
-        {
-            DrawMark(
-                canvas,
-                x + size * 0.35,
-                centerY,
-                markLength,
-                markThickness,
-                horizontal: true);
-        }
-
-        if (right)
-        {
-            DrawMark(
-                canvas,
-                x + size * 0.65,
-                centerY,
-                markLength,
-                markThickness,
-                horizontal: true);
-        }
-
-        if (up)
-        {
-            DrawMark(
-                canvas,
-                centerX,
-                y + size * 0.35,
-                markLength,
-                markThickness,
-                horizontal: false);
-        }
-
-        if (down)
-        {
-            DrawMark(
-                canvas,
-                centerX,
-                y + size * 0.65,
-                markLength,
-                markThickness,
-                horizontal: false);
-        }
+        if (left) DrawMark(canvas, x + size * 0.35, centerY, length, thickness, true);
+        if (right) DrawMark(canvas, x + size * 0.65, centerY, length, thickness, true);
+        if (up) DrawMark(canvas, centerX, y + size * 0.35, length, thickness, false);
+        if (down) DrawMark(canvas, centerX, y + size * 0.65, length, thickness, false);
     }
 
-    private void DrawMark(
+    private static void DrawMark(
         Canvas canvas,
         double centerX,
         double centerY,
@@ -1141,24 +496,140 @@ public partial class MainWindow : Window
         double thickness,
         bool horizontal)
     {
-        var mark = new Rectangle
+        double width = horizontal ? length : thickness;
+        double height = horizontal ? thickness : length;
+        AddRectangle(
+            canvas,
+            centerX - width / 2,
+            centerY - height / 2,
+            width,
+            height,
+            new SolidColorBrush(Color.FromRgb(235, 235, 225)),
+            opacity: 0.86);
+    }
+
+    private static void AddRectangle(
+        Canvas canvas,
+        double x,
+        double y,
+        double width,
+        double height,
+        Brush fill,
+        Brush? stroke = null,
+        double strokeThickness = 0,
+        double opacity = 1)
+    {
+        var rectangle = new Rectangle
         {
-            Width = horizontal ? length : thickness,
-            Height = horizontal ? thickness : length,
-            Fill = new SolidColorBrush(Color.FromRgb(235, 235, 225)),
-            Opacity = 0.86,
+            Width = width,
+            Height = height,
+            Fill = fill,
+            Stroke = stroke,
+            StrokeThickness = strokeThickness,
+            Opacity = opacity,
             IsHitTestVisible = false
         };
+        Canvas.SetLeft(rectangle, x);
+        Canvas.SetTop(rectangle, y);
+        canvas.Children.Add(rectangle);
+    }
 
-        Canvas.SetLeft(
-            mark,
-            centerX - mark.Width / 2);
+    private static void AddEllipse(
+        Canvas canvas,
+        double x,
+        double y,
+        double width,
+        double height,
+        Brush fill,
+        double opacity)
+    {
+        var ellipse = new Ellipse
+        {
+            Width = width,
+            Height = height,
+            Fill = fill,
+            Opacity = opacity,
+            IsHitTestVisible = false
+        };
+        Canvas.SetLeft(ellipse, x);
+        Canvas.SetTop(ellipse, y);
+        canvas.Children.Add(ellipse);
+    }
 
-        Canvas.SetTop(
-            mark,
-            centerY - mark.Height / 2);
+    private static void AddLine(
+        Canvas canvas,
+        double x1,
+        double y1,
+        double x2,
+        double y2,
+        Brush stroke,
+        double thickness,
+        double opacity)
+    {
+        canvas.Children.Add(
+            new Line
+            {
+                X1 = x1,
+                Y1 = y1,
+                X2 = x2,
+                Y2 = y2,
+                Stroke = stroke,
+                StrokeThickness = thickness,
+                Opacity = opacity,
+                IsHitTestVisible = false
+            });
+    }
 
-        canvas.Children.Add(mark);
+    private static void AddPolyline(
+        Canvas canvas,
+        Point point1,
+        Point point2,
+        Point point3,
+        Brush stroke,
+        double thickness,
+        double opacity)
+    {
+        AddPolyline(canvas, new[] { point1, point2, point3 }, stroke, thickness, opacity);
+    }
+
+    private static void AddPolyline(
+        Canvas canvas,
+        Point point1,
+        Point point2,
+        Point point3,
+        Point point4,
+        Brush stroke,
+        double thickness,
+        double opacity)
+    {
+        AddPolyline(canvas, new[] { point1, point2, point3, point4 }, stroke, thickness, opacity);
+    }
+
+    private static void AddPolyline(
+        Canvas canvas,
+        IEnumerable<Point> points,
+        Brush stroke,
+        double thickness,
+        double opacity)
+    {
+        canvas.Children.Add(
+            new Polyline
+            {
+                Points = new PointCollection(points),
+                Stroke = stroke,
+                StrokeThickness = thickness,
+                Opacity = opacity,
+                IsHitTestVisible = false
+            });
+    }
+
+    private static int PositiveModulo(int value, int modulus)
+    {
+        if (modulus <= 0)
+            return 0;
+
+        int result = value % modulus;
+        return result < 0 ? result + modulus : result;
     }
 
     private void SaveStateForUndo()
@@ -1167,46 +638,19 @@ public partial class MainWindow : Window
         redoHistory.Clear();
     }
 
-    private MapSnapshot CreateSnapshot()
-    {
-        return new MapSnapshot
-        {
-            Width = roadMap.Width,
-            Height = roadMap.Height,
-            Tiles = GetTilesArray()
-        };
-    }
+    private MapSnapshot CreateSnapshot() =>
+        new(roadMap.Width, roadMap.Height, roadMap.ToArray());
 
     private void RestoreSnapshot(MapSnapshot snapshot)
     {
-        roadMap = new RoadMap(
-            snapshot.Width,
-            snapshot.Height);
+        roadMap = new RoadMap(snapshot.Width, snapshot.Height);
 
         for (int y = 0; y < snapshot.Height; y++)
-        {
             for (int x = 0; x < snapshot.Width; x++)
-            {
-                string tile = "Empty";
+                roadMap.SetTile(x, y, snapshot.Tiles[y][x]);
 
-                if (y < snapshot.Tiles.Length &&
-                    snapshot.Tiles[y] != null &&
-                    x < snapshot.Tiles[y].Length &&
-                    !string.IsNullOrWhiteSpace(snapshot.Tiles[y][x]))
-                {
-                    tile = snapshot.Tiles[y][x];
-                }
-
-                roadMap.SetTile(x, y, tile);
-            }
-        }
-
-        MapWidthTextBox.Text =
-            snapshot.Width.ToString();
-
-        MapHeightTextBox.Text =
-            snapshot.Height.ToString();
-
+        MapWidthTextBox.Text = snapshot.Width.ToString();
+        MapHeightTextBox.Text = snapshot.Height.ToString();
         DrawMap();
         Focus();
     }
@@ -1217,11 +661,7 @@ public partial class MainWindow : Window
             return;
 
         redoHistory.Push(CreateSnapshot());
-
-        MapSnapshot previousState =
-            undoHistory.Pop();
-
-        RestoreSnapshot(previousState);
+        RestoreSnapshot(undoHistory.Pop());
     }
 
     private void Redo()
@@ -1230,201 +670,16 @@ public partial class MainWindow : Window
             return;
 
         undoHistory.Push(CreateSnapshot());
-
-        MapSnapshot nextState =
-            redoHistory.Pop();
-
-        RestoreSnapshot(nextState);
+        RestoreSnapshot(redoHistory.Pop());
     }
 
-    private void SaveMap_Click(
-        object sender,
-        RoutedEventArgs e)
-    {
-        var dialog = new SaveFileDialog
-        {
-            Filter =
-                "Road Editor map (*.roadmap)|*.roadmap|" +
-                "JSON file (*.json)|*.json",
+    private string[][] GetTilesArray() => roadMap.ToArray();
 
-            FileName = "map.roadmap"
-        };
-
-        if (dialog.ShowDialog() != true)
-            return;
-
-        var data = new MapSaveData
-        {
-            Width = roadMap.Width,
-            Height = roadMap.Height,
-            Tiles = GetTilesArray()
-        };
-
-        string json = JsonSerializer.Serialize(
-            data,
-            new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
-
-        File.WriteAllText(
-            dialog.FileName,
-            json);
-    }
-
-    private void LoadMap_Click(
-        object sender,
-        RoutedEventArgs e)
-    {
-        var dialog = new OpenFileDialog
-        {
-            Filter =
-                "Road Editor map (*.roadmap)|*.roadmap|" +
-                "JSON file (*.json)|*.json|" +
-                "All files (*.*)|*.*"
-        };
-
-        if (dialog.ShowDialog() != true)
-            return;
-
-        try
-        {
-            string json =
-                File.ReadAllText(dialog.FileName);
-
-            MapSaveData? data =
-                JsonSerializer.Deserialize<MapSaveData>(json);
-
-            if (data == null ||
-                data.Width < 3 ||
-                data.Height < 3 ||
-                data.Width > 50 ||
-                data.Height > 50 ||
-                data.Tiles == null)
-            {
-                MessageBox.Show(
-                    "Файл карты имеет неправильный формат.",
-                    "Ошибка",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-
-                return;
-            }
-
-            SaveStateForUndo();
-
-            roadMap = new RoadMap(
-                data.Width,
-                data.Height);
-
-            for (int y = 0; y < data.Height; y++)
-            {
-                for (int x = 0; x < data.Width; x++)
-                {
-                    string tile = "Empty";
-
-                    if (y < data.Tiles.Length &&
-                        data.Tiles[y] != null &&
-                        x < data.Tiles[y].Length &&
-                        !string.IsNullOrWhiteSpace(data.Tiles[y][x]))
-                    {
-                        tile = data.Tiles[y][x];
-                    }
-
-                    roadMap.SetTile(
-                        x,
-                        y,
-                        tile);
-                }
-            }
-
-            MapWidthTextBox.Text =
-                data.Width.ToString();
-
-            MapHeightTextBox.Text =
-                data.Height.ToString();
-
-            DrawMap();
-            Focus();
-        }
-        catch (Exception exception)
-        {
-            MessageBox.Show(
-                $"Не удалось загрузить карту.\n{exception.Message}",
-                "Ошибка",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
-        }
-    }
-
-    private string[][] GetTilesArray()
-    {
-        var result = new string[roadMap.Height][];
-
-        for (int y = 0; y < roadMap.Height; y++)
-        {
-            result[y] =
-                new string[roadMap.Width];
-
-            for (int x = 0; x < roadMap.Width; x++)
-            {
-                result[y][x] =
-                    roadMap.GetTile(x, y);
-            }
-        }
-
-        return result;
-    }
-
-    private void ExportPng_Click(
-        object sender,
-        RoutedEventArgs e)
-    {
-        var dialog = new SaveFileDialog
-        {
-            Filter = "PNG image (*.png)|*.png",
-            FileName = "road-map.png"
-        };
-
-        if (dialog.ShowDialog() != true)
-            return;
-
-        Size mapSize = new(
-            MapCanvas.Width,
-            MapCanvas.Height);
-
-        MapCanvas.Measure(mapSize);
-        MapCanvas.Arrange(new Rect(mapSize));
-        MapCanvas.UpdateLayout();
-
-        var bitmap = new RenderTargetBitmap(
-            (int)MapCanvas.Width,
-            (int)MapCanvas.Height,
-            96,
-            96,
-            PixelFormats.Pbgra32);
-
-        bitmap.Render(MapCanvas);
-
-        var encoder =
-            new PngBitmapEncoder();
-
-        encoder.Frames.Add(
-            BitmapFrame.Create(bitmap));
-
-        using FileStream stream =
-            File.Create(dialog.FileName);
-
-        encoder.Save(stream);
-    }
-
-    private void Help_Click(
-        object sender,
-        RoutedEventArgs e)
+    private void Help_Click(object sender, RoutedEventArgs e)
     {
         MessageBox.Show(
-            "Нажми на дорожный элемент в палитре.\n" +
-            "После этого нажми на нужную ячейку карты.\n\n" +
+            "Нажмите на дорожный элемент в палитре.\n" +
+            "После этого нажмите на нужную ячейку карты.\n\n" +
             "Сохранить - сохранить карту в файл.\n" +
             "Загрузить - открыть сохраненную карту.\n" +
             "Экспорт PNG - сохранить карту как изображение.\n" +
@@ -1438,50 +693,41 @@ public partial class MainWindow : Window
         Focus();
     }
 
-    private void Window_PreviewKeyDown(
-        object sender,
-        KeyEventArgs e)
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.F1)
         {
             Help_Click(sender, e);
             e.Handled = true;
-            return;
         }
-
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) &&
-            e.Key == Key.Z)
+        else if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && e.Key == Key.Z)
         {
             Undo();
             e.Handled = true;
-            return;
         }
-
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) &&
-            e.Key == Key.Y)
+        else if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && e.Key == Key.Y)
         {
             Redo();
             e.Handled = true;
         }
     }
 
-    private sealed class MapSnapshot
+    [Flags]
+    private enum Crosswalk
     {
-        public int Width { get; set; }
-
-        public int Height { get; set; }
-
-        public string[][] Tiles { get; set; } =
-            Array.Empty<string[]>();
+        None = 0,
+        Top = 1,
+        Bottom = 2,
+        Left = 4,
+        Right = 8
     }
 
-    private sealed class MapSaveData
-    {
-        public int Width { get; set; }
+    private readonly record struct TileDefinition(
+        bool Left,
+        bool Right,
+        bool Up,
+        bool Down,
+        Crosswalk Crosswalks = Crosswalk.None);
 
-        public int Height { get; set; }
-
-        public string[][] Tiles { get; set; } =
-            Array.Empty<string[]>();
-    }
+    private sealed record MapSnapshot(int Width, int Height, string[][] Tiles);
 }
