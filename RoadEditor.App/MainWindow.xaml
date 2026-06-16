@@ -21,10 +21,8 @@
               Background="#15151D"
               Foreground="White"
               FontSize="14">
-
 			<MenuItem Header="Отмена"
                       Click="Undo_Click"/>
-
 			<MenuItem Header="Повтор"
                       Click="Redo_Click"/>
 
@@ -32,15 +30,12 @@
 
 			<MenuItem Header="Очистить карту"
                       Click="ClearMap_Click"/>
-
 			<MenuItem Header="Загрузить"
-                      Click="LoadMap_Click"/>
-
+                      Click="LoadProject_Click"/>
 			<MenuItem Header="Сохранить"
-                      Click="SaveMap_Click"/>
-
+                      Click="SaveProject_Click"/>
 			<MenuItem Header="Экспорт PNG"
-                      Click="ExportPng_Click"/>
+                      Click="ExportProjectPng_Click"/>
 
 			<Separator/>
 
@@ -60,7 +55,6 @@
 
 				<ScrollViewer VerticalScrollBarVisibility="Auto">
 					<StackPanel>
-
 						<TextBlock x:Name="CellInfoText"
                                    Text="Номер ячейки: 0, 0"
                                    Foreground="White"
@@ -82,10 +76,8 @@
 
 							<StackPanel Grid.Column="0"
                                         Margin="0,0,6,0">
-
 								<TextBlock Text="Ширина"
                                            Foreground="White"/>
-
 								<TextBox x:Name="MapWidthTextBox"
                                          Text="12"
                                          Height="30"
@@ -94,10 +86,8 @@
 
 							<StackPanel Grid.Column="1"
                                         Margin="6,0,0,0">
-
 								<TextBlock Text="Высота"
                                            Foreground="White"/>
-
 								<TextBox x:Name="MapHeightTextBox"
                                          Text="7"
                                          Height="30"
@@ -105,7 +95,7 @@
 							</StackPanel>
 						</Grid>
 
-						<Button Content="Создать карту"
+						<Button Content="Изменить размер"
                                 Height="34"
                                 FontSize="15"
                                 Foreground="White"
@@ -113,7 +103,7 @@
                                 BorderBrush="#00AEFF"
                                 BorderThickness="1.5"
                                 Margin="0,0,0,14"
-                                Click="CreateMap_Click"/>
+                                Click="ResizeMap_Click"/>
 
 						<TextBlock Text="Режим работы"
                                    Foreground="White"
@@ -123,49 +113,41 @@
 
 						<UniformGrid Columns="2"
                                      Margin="0,0,0,8">
-
 							<Button Content="Дороги"
                                     Tag="Road"
                                     Height="32"
                                     Margin="2"
                                     Click="DrawingTool_Click"/>
-
 							<Button Content="Выбор"
                                     Tag="Select"
                                     Height="32"
                                     Margin="2"
                                     Click="DrawingTool_Click"/>
-
 							<Button Content="Линия"
                                     Tag="Line"
                                     Height="32"
                                     Margin="2"
                                     Click="DrawingTool_Click"/>
-
 							<Button Content="Прямоугольник"
                                     Tag="Rectangle"
                                     Height="32"
                                     Margin="2"
                                     Click="DrawingTool_Click"/>
-
 							<Button Content="Эллипс"
                                     Tag="Ellipse"
                                     Height="32"
                                     Margin="2"
                                     Click="DrawingTool_Click"/>
-
 							<Button Content="Треугольник"
                                     Tag="Triangle"
                                     Height="32"
                                     Margin="2"
                                     Click="DrawingTool_Click"/>
-
 							<Button Content="Стрелка"
                                     Tag="Arrow"
                                     Height="32"
                                     Margin="2"
                                     Click="DrawingTool_Click"/>
-
 							<Button Content="Звезда"
                                     Tag="Star"
                                     Height="32"
@@ -190,27 +172,13 @@
                                   SelectedIndex="0"
                                   Height="30"
                                   Margin="0,0,0,8">
-
-							<ComboBoxItem Content="Белый"
-                                          Tag="#FFFFFF"/>
-
-							<ComboBoxItem Content="Черный"
-                                          Tag="#111111"/>
-
-							<ComboBoxItem Content="Красный"
-                                          Tag="#E53935"/>
-
-							<ComboBoxItem Content="Синий"
-                                          Tag="#1E88E5"/>
-
-							<ComboBoxItem Content="Зеленый"
-                                          Tag="#43A047"/>
-
-							<ComboBoxItem Content="Желтый"
-                                          Tag="#FDD835"/>
-
-							<ComboBoxItem Content="Фиолетовый"
-                                          Tag="#8E24AA"/>
+							<ComboBoxItem Content="Белый" Tag="#FFFFFF"/>
+							<ComboBoxItem Content="Черный" Tag="#111111"/>
+							<ComboBoxItem Content="Красный" Tag="#E53935"/>
+							<ComboBoxItem Content="Синий" Tag="#1E88E5"/>
+							<ComboBoxItem Content="Зеленый" Tag="#43A047"/>
+							<ComboBoxItem Content="Желтый" Tag="#FDD835"/>
+							<ComboBoxItem Content="Фиолетовый" Tag="#8E24AA"/>
 						</ComboBox>
 
 						<TextBlock Text="Цвет заливки"
@@ -223,27 +191,13 @@
                                   SelectedIndex="2"
                                   Height="30"
                                   Margin="0,0,0,6">
-
-							<ComboBoxItem Content="Белый"
-                                          Tag="#FFFFFF"/>
-
-							<ComboBoxItem Content="Черный"
-                                          Tag="#111111"/>
-
-							<ComboBoxItem Content="Красный"
-                                          Tag="#E53935"/>
-
-							<ComboBoxItem Content="Синий"
-                                          Tag="#1E88E5"/>
-
-							<ComboBoxItem Content="Зеленый"
-                                          Tag="#43A047"/>
-
-							<ComboBoxItem Content="Желтый"
-                                          Tag="#FDD835"/>
-
-							<ComboBoxItem Content="Фиолетовый"
-                                          Tag="#8E24AA"/>
+							<ComboBoxItem Content="Белый" Tag="#FFFFFF"/>
+							<ComboBoxItem Content="Черный" Tag="#111111"/>
+							<ComboBoxItem Content="Красный" Tag="#E53935"/>
+							<ComboBoxItem Content="Синий" Tag="#1E88E5"/>
+							<ComboBoxItem Content="Зеленый" Tag="#43A047"/>
+							<ComboBoxItem Content="Желтый" Tag="#FDD835"/>
+							<ComboBoxItem Content="Фиолетовый" Tag="#8E24AA"/>
 						</ComboBox>
 
 						<CheckBox x:Name="UseFillCheckBox"
@@ -407,6 +361,7 @@
                                 Height="{Binding ElementName=MapCanvas, Path=Height}"
                                 Background="Transparent"
                                 IsHitTestVisible="False"
+                                ClipToBounds="True"
                                 MouseLeftButtonDown="DrawingCanvas_MouseLeftButtonDown"
                                 MouseMove="DrawingCanvas_MouseMove"
                                 MouseLeftButtonUp="DrawingCanvas_MouseLeftButtonUp"/>
