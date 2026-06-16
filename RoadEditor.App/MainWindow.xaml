@@ -9,6 +9,8 @@
         WindowStartupLocation="CenterScreen"
         Background="#111118"
         PreviewKeyDown="Window_PreviewKeyDown"
+        Loaded="Window_Loaded"
+        Closing="Window_Closing"
         Focusable="True">
 
 	<Grid>
@@ -17,7 +19,8 @@
 			<RowDefinition Height="*"/>
 		</Grid.RowDefinitions>
 
-		<Menu Grid.Row="0"
+		<Menu x:Name="MainMenu"
+              Grid.Row="0"
               Background="#15151D"
               Foreground="White"
               FontSize="14">
@@ -49,7 +52,8 @@
 				<ColumnDefinition Width="*"/>
 			</Grid.ColumnDefinitions>
 
-			<Border Grid.Column="0"
+			<Border x:Name="SidebarBorder"
+                    Grid.Column="0"
                     Background="#2D0054"
                     Padding="14">
 
@@ -311,6 +315,41 @@
                                    TextAlignment="Center"
                                    Margin="0,0,0,14"/>
 
+						<TextBlock Text="Настройки приложения"
+                                   Foreground="White"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,8"/>
+
+						<TextBlock Text="Цветовая схема"
+                                   Foreground="White"
+                                   FontSize="14"
+                                   Margin="0,0,0,4"/>
+
+						<ComboBox x:Name="ThemeComboBox"
+                                  Height="30"
+                                  SelectedIndex="0"
+                                  Margin="0,0,0,8"
+                                  SelectionChanged="ThemeComboBox_SelectionChanged">
+							<ComboBoxItem Content="Фиолетовая"
+                                          Tag="Purple"/>
+							<ComboBoxItem Content="Синяя"
+                                          Tag="Blue"/>
+						</ComboBox>
+
+						<Button Content="Сбросить настройки"
+                                Height="32"
+                                Margin="0,0,0,6"
+                                Click="ResetSettings_Click"/>
+
+						<TextBlock x:Name="SettingsStatusText"
+                                   Text="Настройки сохраняются автоматически"
+                                   Foreground="#D9CBE7"
+                                   FontSize="12"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Center"
+                                   Margin="0,0,0,14"/>
+
 						<TextBlock Text="Дорожные элементы"
                                    Foreground="White"
                                    FontSize="18"
@@ -319,7 +358,7 @@
 
 						<Canvas x:Name="PaletteCanvas"
                                 Width="288"
-                                Height="216"
+                                Height="288"
                                 Background="#111118"
                                 HorizontalAlignment="Center"
                                 MouseLeftButtonDown="PaletteCanvas_MouseLeftButtonDown"/>
@@ -327,7 +366,8 @@
 				</ScrollViewer>
 			</Border>
 
-			<Border Grid.Column="1"
+			<Border x:Name="EditorBorder"
+                    Grid.Column="1"
                     Background="#111118"
                     Padding="18"
                     BorderBrush="#2D0054"
